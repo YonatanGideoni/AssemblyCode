@@ -159,8 +159,8 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		inc dl		;dl=bxLeft
 		mov ax, siLeft
-		mov bl, len1-1
-		div bl		; dh = row = si % (len1-1)
+		mov bl, len1
+		div bl		; dh = row = si % len1
 		mov dh, al
 		mov ah, 2
 		int 10h
@@ -198,7 +198,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -231,7 +231,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		dec dl
 		mov ax, siRight
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -268,7 +268,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -304,7 +304,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		inc dl
 		mov ax, siLeft
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -344,7 +344,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -377,7 +377,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		dec dl
 		mov ax, siRight
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -414,7 +414,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -441,7 +441,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], dl
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1		;move to new tile
+		mov bl, len1		;move to new tile
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -458,7 +458,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -471,7 +471,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -487,7 +487,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -500,7 +500,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -521,7 +521,7 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov checkers[bx][si], 1
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -533,7 +533,7 @@ assume cs:cseg, ds:dseg
 		mov si, tempSi
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -545,12 +545,12 @@ assume cs:cseg, ds:dseg
 		mov currentChecker, 2
 		mov ch, '2'
 		dec blackCount
-		jmp WaitForInput
+		jmp WinCheck
 	SwitchTo3:
 		mov currentChecker, 3
 		mov ch, '3'
 		dec whiteCount
-		jmp WaitForInput
+		jmp WinCheck
 
 	MakeMove:
 		mov bxDyingRight, 0ffh
@@ -568,7 +568,7 @@ assume cs:cseg, ds:dseg
 
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -583,7 +583,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, siLeft
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -597,7 +597,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -611,7 +611,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], al
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -632,6 +632,21 @@ assume cs:cseg, ds:dseg
 		dec ch
 		mov currentChecker, ch
 		add ch, '0'
+		jmp WinCheck
+
+	WinCheck:
+		mov bxLeft, 0ffh
+		mov bxRight, 0ffh
+		mov siLeft, 0ffh
+		mov siRight, 0ffh
+		cmp blackCount, 0
+		jz Finish
+		cmp whiteCount, 0
+		jz Finish
+		cmp dh, 0
+		jz Finish
+		cmp dh, len1
+		jz Finish
 		jmp WaitForInput
 
 	Finish:
