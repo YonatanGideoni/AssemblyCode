@@ -262,9 +262,9 @@ assume cs:cseg, ds:dseg
 		sub si, len1
 		mov siDyingRight, si
 		dec bx
-		mov bxLeft, bx
+		mov bxRight, bx
 		sub si, len1
-		mov siLeft, si
+		mov siRight, si
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
@@ -408,9 +408,9 @@ assume cs:cseg, ds:dseg
 		add si, len1
 		mov siDyingRight, si
 		dec bx
-		mov bxLeft, bx
+		mov bxRight, bx
 		add si, len1
-		mov siLeft, si
+		mov siRight, si
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
@@ -437,7 +437,6 @@ assume cs:cseg, ds:dseg
 		mov ch, currentChecker
 		add ch, '0'
 
-		int 3
 		mov dl, currentChecker
 		mov checkers[bx][si], dl
 		mov dl, bl
@@ -450,6 +449,7 @@ assume cs:cseg, ds:dseg
 		mov dl, ch
 		int 21h
 
+		mov bx, tempBx
 		cmp bx, bxLeft
 		jnz killRightTile		;check if right tile or left tile is killed
 						
@@ -538,6 +538,7 @@ assume cs:cseg, ds:dseg
 		mov dh, al
 		mov ah, 2
 		int 10h
+		mov bx, tempBx
 
 		cmp currentChecker, 3
 		jnz SwitchTo3
