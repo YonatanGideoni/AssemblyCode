@@ -20,6 +20,11 @@ dseg segment
 	tempBx dw ?
 	tempSi dw ?
 	currentChecker db 3
+	bxDyingLeft dw 0ffh
+	siDyingLeft dw 0ffh
+	bxDyingRight dw 0ffh
+	siDyingRight dw 0ffh
+	eatTile = '5'
 dseg ends
 
 cseg segment
@@ -118,7 +123,9 @@ assume cs:cseg, ds:dseg
 
 	CheckMove:
 		mov ah, 8
-		int 10h		
+		int 10h
+		cmp al, eatTile
+		jz gotoCannibalMove
 		cmp al, ch
 		jnz gotoWaitForInput
 		cmp ch, '4'
@@ -131,9 +138,14 @@ assume cs:cseg, ds:dseg
 		jz Check3
 		jmp Check2
 
+	gotoNoLeftMove3:
+		jmp NoLeftMove3
+	gotoCannibalMove:
+		jmp CannibalMove
+
 	Check3:
-		cmp bx, len1-1		;check if on left side of board
-		jz NoLeftMove3
+		cmp bx, len0-1		;check if on left side of board
+		jz gotoNoLeftMove3
 		
 		cmp checkers[bx+1][si-len1], 1		;check if neutral tile
 		jnz EatLeft3
@@ -148,7 +160,7 @@ assume cs:cseg, ds:dseg
 		inc dl		;dl=bxLeft
 		mov ax, siLeft
 		mov bl, len1-1
-		div bl		; dh = row = (si-bx) % (len1-1)
+		div bl		; dh = row = si % (len1-1)
 		mov dh, al
 		mov ah, 2
 		int 10h
@@ -161,9 +173,50 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov ch, '4'
 		cmp bx, 0
-		jz NoRightMove3
+		jz gotoNoRightMove3
 		jmp NoLeftMove3
+
 	EatLeft3:
+		cmp checkers[bx+1][si-len1], 3
+		jz NoLeftMove3
+		cmp bx, len0-2		;check if there is space to eat
+		jnc NoLeftMove3
+		cmp si, 2*len0
+		jc NoLeftMove3
+		cmp checkers[bx+2][si-2*len1], 1
+		jnz NoLeftMove3
+		mov pressedBx, bx
+		mov pressedSi, si
+		inc bx
+		mov bxDyingLeft, bx
+		sub si, len1
+		mov siDyingLeft, si
+		inc bx
+		mov bxLeft, bx
+		sub si, len1
+		mov siLeft, si
+		mov checkers[bx][si], 5
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '5'
+		int 21h
+		add dh, 2
+		mov bx, pressedBx
+		mov dl, bl
+		int 10h
+		mov si, pressedSi
+		mov ch, '4'
+		cmp bx, 0
+		jz gotoNoRightMove3
+		jmp NoLeftMove3
+
+	gotoNoRightMove3:
+		jmp NoRightMove3
 
 	NoLeftMove3:
 		cmp checkers[bx-1][si-len1], 1
@@ -192,7 +245,42 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov ch, '4'
 		jmp NoRightMove3
+
 	EatRight3:
+		cmp checkers[bx-1][si-len1], 3
+		jz NoRightMove3
+		cmp bx, 1
+		jc NoRightMove3
+		cmp si, 2*len0
+		jc NoRightMove3
+		cmp checkers[bx-2][si-2*len1], 1
+		jnz NoRightMove3
+		mov pressedBx, bx
+		mov pressedSi, si
+		dec bx
+		mov bxDyingRight, bx
+		sub si, len1
+		mov siDyingRight, si
+		dec bx
+		mov bxLeft, bx
+		sub si, len1
+		mov siLeft, si
+		mov checkers[bx][si], 5
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '5'
+		int 21h
+		add dh, 2
+		mov bx, pressedBx
+		mov dl, bl
+		int 10h
+		mov si, pressedSi
+		mov ch, '4'
 
 	NoRightMove3:
 		jmp WaitForInput
@@ -201,8 +289,8 @@ assume cs:cseg, ds:dseg
 		jmp WaitForInput
 
 	Check2:
-		cmp bx, len1-1
-		jz NoLeftMove2
+		cmp bx, len0-1
+		jz gotoNoLeftMove2
 		
 		cmp checkers[bx+1][si+len1], 1
 		jnz EatLeft2
@@ -230,9 +318,51 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov ch, '4'
 		cmp bx, 0
-		jz NoRightMove2
+		jz gotoNoRightMove2
+	gotoNoLeftMove2:
 		jmp NoLeftMove2
+
 	EatLeft2:
+		cmp checkers[bx+1][si+len1], 2
+		jz NoLeftMove2
+		cmp bx, len0-2		;check if there is space to eat
+		jnc NoLeftMove2
+		cmp si, (len1-2)*len0
+		jnc NoLeftMove2
+		cmp checkers[bx+2][si+2*len1], 1
+		jnz NoLeftMove2
+		mov pressedBx, bx
+		mov pressedSi, si
+		inc bx
+		mov bxDyingLeft, bx
+		add si, len1
+		mov siDyingLeft, si
+		inc bx
+		mov bxLeft, bx
+		add si, len1
+		mov siLeft, si
+		mov checkers[bx][si], 5
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '5'
+		int 21h
+		sub dh, 2
+		mov bx, pressedBx
+		mov dl, bl
+		int 10h
+		mov si, pressedSi
+		mov ch, '4'
+		cmp bx, 0
+		jz gotoNoRightMove2
+		jmp NoLeftMove2
+
+	gotoNoRightMove2:
+		jmp NoRightMove2
 
 	NoLeftMove2:
 		cmp checkers[bx-1][si+len1], 1
@@ -261,12 +391,171 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov ch, '4'
 		jmp NoRightMove2
+
 	EatRight2:
+		cmp checkers[bx-1][si+len1], 2
+		jz NoRightMove2
+		cmp bx, 1
+		jc NoRightMove2
+		cmp si, (len1-2)*len0
+		jnc NoRightMove2
+		cmp checkers[bx-2][si+2*len1], 1
+		jnz NoRightMove2
+		mov pressedBx, bx
+		mov pressedSi, si
+		dec bx
+		mov bxDyingRight, bx
+		add si, len1
+		mov siDyingRight, si
+		dec bx
+		mov bxLeft, bx
+		add si, len1
+		mov siLeft, si
+		mov checkers[bx][si], 5
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '5'
+		int 21h
+		sub dh, 2
+		mov bx, pressedBx
+		mov dl, bl
+		int 10h
+		mov si, pressedSi
+		mov ch, '4'
 
 	NoRightMove2:
 		jmp WaitForInput
+	
+	CannibalMove:
+		mov tempBx, bx
+		mov tempSi, si
+		mov ch, currentChecker
+		add ch, '0'
+
+		int 3
+		mov dl, currentChecker
+		mov checkers[bx][si], dl
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1		;move to new tile
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, ch
+		int 21h
+
+		cmp bx, bxLeft
+		jnz killRightTile		;check if right tile or left tile is killed
+						
+		mov bx, bxDyingLeft			;kill eaten tile
+		mov si, siDyingLeft
+		mov checkers[bx][si], 1
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '1'
+		int 21h
+
+		mov bx, bxRight			;clear other tile
+		mov si, siRight
+		mov checkers[bx][si], 1
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '1'
+		int 21h
+
+		jmp endCannibalTurn
+
+	killRightTile:		
+		mov bx, bxDyingRight
+		mov si, siDyingRight
+		mov checkers[bx][si], 1
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '1'
+		int 21h
+
+		mov bx, bxLeft
+		mov si, siLeft
+		mov checkers[bx][si], 1
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '1'
+		int 21h
+
+		jmp endCannibalTurn
+
+	endCannibalTurn:
+		mov bxDyingRight, 0ffh
+		mov bxDyingLeft, 0ffh
+		mov siDyingRight, 0ffh
+		mov siDyingLeft, 0ffh
+
+		mov bx, pressedBx		;clear previous tile
+		mov dl, bl
+		mov si, pressedSi
+		mov checkers[bx][si], 1
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+		mov dl, '1'
+		int 21h
+
+		mov bx, tempBx		;return to pressed tile
+		mov si, tempSi
+		mov dl, bl
+		mov ax, si
+		mov bl, len1-1
+		div bl
+		mov dh, al
+		mov ah, 2
+		int 10h
+
+		cmp currentChecker, 3
+		jnz SwitchTo3
+		mov currentChecker, 2
+		mov ch, '2'
+		dec blackCount
+		jmp WaitForInput
+	SwitchTo3:
+		mov currentChecker, 3
+		mov ch, '3'
+		dec whiteCount
+		jmp WaitForInput
 
 	MakeMove:
+		mov bxDyingRight, 0ffh
+		mov bxDyingLeft, 0ffh
+		mov siDyingRight, 0ffh
+		mov siDyingLeft, 0ffh
 		mov tempBx, bx
 		mov tempSi, si
 		cmp bxRight, 0ffh
