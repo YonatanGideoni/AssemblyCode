@@ -159,8 +159,8 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		inc dl		;dl=bxLeft
 		mov ax, siLeft
-		mov bl, len1-1
-		div bl		; dh = row = si % (len1-1)
+		mov bl, len1
+		div bl		; dh = row = si % len1
 		mov dh, al
 		mov ah, 2
 		int 10h
@@ -198,7 +198,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -231,7 +231,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		dec dl
 		mov ax, siRight
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -262,13 +262,13 @@ assume cs:cseg, ds:dseg
 		sub si, len1
 		mov siDyingRight, si
 		dec bx
-		mov bxLeft, bx
+		mov bxRight, bx
 		sub si, len1
-		mov siLeft, si
+		mov siRight, si
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -283,9 +283,6 @@ assume cs:cseg, ds:dseg
 		mov ch, '4'
 
 	NoRightMove3:
-		jmp WaitForInput
-	
-	NoMove:
 		jmp WaitForInput
 
 	Check2:
@@ -304,7 +301,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		inc dl
 		mov ax, siLeft
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -344,7 +341,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -377,7 +374,7 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		dec dl
 		mov ax, siRight
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -408,13 +405,13 @@ assume cs:cseg, ds:dseg
 		add si, len1
 		mov siDyingRight, si
 		dec bx
-		mov bxLeft, bx
+		mov bxRight, bx
 		add si, len1
-		mov siLeft, si
+		mov siRight, si
 		mov checkers[bx][si], 5
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -437,12 +434,11 @@ assume cs:cseg, ds:dseg
 		mov ch, currentChecker
 		add ch, '0'
 
-		int 3
 		mov dl, currentChecker
 		mov checkers[bx][si], dl
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1		;move to new tile
+		mov bl, len1		;move to new tile
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -450,6 +446,7 @@ assume cs:cseg, ds:dseg
 		mov dl, ch
 		int 21h
 
+		mov bx, tempBx
 		cmp bx, bxLeft
 		jnz killRightTile		;check if right tile or left tile is killed
 						
@@ -458,7 +455,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -471,7 +468,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -487,7 +484,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -500,7 +497,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -521,7 +518,7 @@ assume cs:cseg, ds:dseg
 		mov si, pressedSi
 		mov checkers[bx][si], 1
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -533,23 +530,24 @@ assume cs:cseg, ds:dseg
 		mov si, tempSi
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
 		int 10h
+		mov bx, tempBx
 
 		cmp currentChecker, 3
 		jnz SwitchTo3
 		mov currentChecker, 2
 		mov ch, '2'
 		dec blackCount
-		jmp WaitForInput
+		jmp WinCheck
 	SwitchTo3:
 		mov currentChecker, 3
 		mov ch, '3'
 		dec whiteCount
-		jmp WaitForInput
+		jmp WinCheck
 
 	MakeMove:
 		mov bxDyingRight, 0ffh
@@ -567,7 +565,7 @@ assume cs:cseg, ds:dseg
 
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -582,7 +580,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, siLeft
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -596,7 +594,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], 1
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -610,7 +608,7 @@ assume cs:cseg, ds:dseg
 		mov checkers[bx][si], al
 		mov dl, bl
 		mov ax, si
-		mov bl, len1-1
+		mov bl, len1
 		div bl
 		mov dh, al
 		mov ah, 2
@@ -631,6 +629,21 @@ assume cs:cseg, ds:dseg
 		dec ch
 		mov currentChecker, ch
 		add ch, '0'
+		jmp WinCheck
+
+	WinCheck:
+		mov bxLeft, 0ffh
+		mov bxRight, 0ffh
+		mov siLeft, 0ffh
+		mov siRight, 0ffh
+		cmp blackCount, 0
+		jz Finish
+		cmp whiteCount, 0
+		jz Finish
+		cmp dh, 0
+		jz Finish
+		cmp dh, len1-1
+		jz Finish
 		jmp WaitForInput
 
 	Finish:
