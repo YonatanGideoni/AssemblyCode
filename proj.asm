@@ -28,13 +28,19 @@ dseg segment
 	blackCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,7,13,7,16,255,16,5,19,5,15,255,14,5,23,5,13,255,13,4,27,4,12,255,12,4,29,4,11,255,11,3,33,3,10,255,10,3,35,3,9,255,9,3,37,3,8,255,5,1,2,3,39,3,7,255,8,3,39,3,7,255,7,3,41,3,6,255,6,3,43,3,5,255,6,3,43,3,5,255,5,3,45,3,4,255,5,3,45,3,4,255,5,2,47,2,4,255,4,3,47,3,3,255,4,3,47,3,3,255,4,2,49,2,3,255,4,2,49,2,3,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,4,2,49,2,3,255,4,2,49,2,3,255,4,3,47,3,3,255,4,3,47,3,3,255,5,2,47,2,4,255,5,3,45,3,4,255,5,3,45,3,4,255,6,3,43,3,5,255,6,3,43,3,5,255,7,3,41,3,6,255,8,3,39,3,7,255,8,3,39,3,7,255,9,3,37,3,8,255,10,3,35,3,9,255,11,3,33,3,10,255,12,4,29,4,11,255,13,4,27,4,12,255,14,5,23,5,13,255,16,5,19,5,15,255,17,7,13,7,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
 	whiteCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,27,16,255,16,29,15,255,14,33,13,255,13,35,12,255,12,37,11,255,11,39,10,255,10,41,9,255,9,43,8,255,8,45,7,255,8,45,7,255,7,47,6,255,6,49,5,255,6,49,5,255,5,51,4,255,5,51,4,255,5,51,4,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,5,51,4,255,5,51,4,255,5,51,4,255,6,49,5,255,6,49,5,255,7,47,6,255,8,45,7,255,8,45,7,255,9,43,8,255,10,41,9,255,11,39,10,255,12,37,11,255,13,35,12,255,14,33,13,255,16,29,15,255,17,27,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
 	emptyTile db 60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,254
-	currentGraphicsColor db ?
 	currentRow dw 0
 	currentCol dw 0
 	graphicsIndex db 0
 	tileLength = 60
+	cursorLength = 15
 	oppositeColor db 15
 	currentColor db 0
+	prevBx dw ?
+	prevSi dw ?
+	prevCol dw ?
+	prevRow dw ?
+	arrCol db 0
+	arrRow db ?
 dseg ends
 
 cseg segment
@@ -116,6 +122,7 @@ assume cs:cseg, ds:dseg
 			mov bh, currentColor
 			mov oppositeColor, bh
 			mov currentColor, al
+			mov bh, 0
 			jmp contBlackTile
 			
 
@@ -151,6 +158,7 @@ assume cs:cseg, ds:dseg
 			mov bh, currentColor
 			mov oppositeColor, bh
 			mov currentColor, al
+			mov bh, 0
 			jmp contWhiteTile
 
 	gotoCreateTile:
@@ -162,6 +170,7 @@ assume cs:cseg, ds:dseg
 		mov di, 0
 		mov bx, tempBx
 		inc bx
+		mov bh, 0
 		add currentRow, tileLength
 		cmp bx, len1
 		jnz gotoCreateTile
@@ -173,8 +182,7 @@ assume cs:cseg, ds:dseg
 		jnz gotoCreateTile
 
 	createBorder:
-		mov bl, 3
-		mov bh, 0
+		mov bx, 3
 		mov dx, tileLength*len1
 		mov cx, tileLength*len0
 		mov al, 15
@@ -190,19 +198,26 @@ assume cs:cseg, ds:dseg
 
 	mov bx, 0
 	mov si, 0
-	mov al, 4
-	mov dx, tileLength/4
-	mov cx, tileLength/4
+	mov al, 1
+	mov dx, cursorLength
+	mov cx, cursorLength
 	createStartCursor:
 		int 10h
 		loop createStartCursor
-		mov cx, tileLength/4
+		mov cx, cursorLength
 		dec dx
 		jnz createStartCursor
 	mov al, 0
 	mov cx, 0
+	mov dx, 0
+	mov currentCol, 0
+	mov currentRow, 0
 
 	WaitForInput:
+		mov prevBx, bx
+		mov prevSi, si
+		mov prevCol, cx
+		mov prevRow, dx
 		mov ah, 8
 		int 21h
 		mov ah, 2
@@ -215,40 +230,189 @@ assume cs:cseg, ds:dseg
 		cmp al, 'w'
 		jz MoveUp
 		cmp al, ' '
-		jz CheckMove
+		jz gotoCheckMove
 		cmp al, 27
 		jz gotoFinish
 		jmp WaitForInput
+	gotoCheckMove:
+		jmp CheckMove
 	gotoFinish:
 		jmp Finish
 	MoveRight:
-		cmp dl, len1-1
+		cmp arrCol, len1-1
 		jz WaitForInput
-		inc dl
-		int 10h
+		add cx, tileLength
+		mov currentCol, cx
+		inc arrCol
 		inc bx
-		jmp WaitForInput
+		jmp updateCursor
 	MoveDown:
-		cmp dh, len0-1
+		cmp arrRow, len0-1
 		jz WaitForInput
-		inc dh
-		int 10h
+		add dx, tileLength
+		mov currentRow, dx
+		inc arrRow
 		add si, len1
-		jmp WaitForInput
+		jmp updateCursor
 	MoveUp:
-		cmp dh, 0
+		cmp arrRow, 0
 		jz WaitForInput
-		dec dh
-		int 10h
+		sub dx, tileLength
+		mov currentRow, dx
+		dec arrRow
 		sub si, len1
-		jmp WaitForInput
+		jmp updateCursor
 	MoveLeft:
-		cmp dl, 0
-		jz WaitForInput
-		dec dl
-		int 10h
+		cmp arrCol, 0
+		jz gotoWaitForInput1
+		sub cx, tileLength
+		mov currentCol, cx
+		dec arrCol
 		dec bx
+		jmp updateCursor
+
+	gotoWaitForInput1:
 		jmp WaitForInput
+
+	updateCursor:
+		mov tempBx, bx
+		mov tempSi, si
+		add dx, cursorLength
+		add cx, cursorLength
+		mov ah, 0ch
+		mov al, 1
+		mov bh, 0
+		mov di, currentCol
+		moveCursor:
+			int 10h
+			dec cx
+			cmp cx, di
+			jnz moveCursor
+			add cx, cursorLength
+			dec dx
+			cmp dx, currentRow
+			jnz moveCursor
+
+		mov bx, prevBx
+		mov si, prevSi
+		mov ah, 0ch
+		mov bh, checkers[bx][si]
+		cmp bh, 0
+		jz updateToWhiteTile
+		cmp bh, 1
+		jz updateToBlackTile
+		cmp bh, 2
+		jz updateToBlackChecker
+		cmp bh, 3
+		jz updateToWhiteChecker
+		jmp updateToMoveTile
+
+		updateToWhiteTile:
+			mov al, 15
+			jmp updateToEmptyTile			
+
+		updateToBlackTile:
+			mov al, 0
+			jmp updateToEmptyTile
+
+		updateToWhiteChecker:
+			mov bh, 0
+			mov al, 0
+			mov di, 0
+			mov bl, whiteCheckerGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdateToWhiteChecker:
+				int 10h
+				dec dx
+				dec bl
+				jnz contUpdateToWhiteChecker
+				inc di
+				mov bl, whiteCheckerGraphics[di]
+				cmp bl, 255
+				jnz switchColorWhiteTileUpdate			
+				inc di
+				mov bl, whiteCheckerGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp contUpdateToWhiteChecker
+			switchColorWhiteTileUpdate:
+				cmp bl, 254
+				jz gotoendCursorUpdate
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp contUpdateToWhiteChecker
+
+		gotoEndCursorUpdate:		
+			jmp endCursorUpdate
+
+		updateToBlackChecker:
+			mov bh, 0
+			mov al, 0
+			mov di, 0
+			mov bl, blackCheckerGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdateToBlackChecker:
+				int 10h
+				dec dx
+				dec bl
+				jnz contUpdateToBlackChecker
+				inc di
+				mov bl, blackCheckerGraphics[di]
+				cmp bl, 255
+				jnz switchColorBlackTileUpdate			
+				inc di
+				mov bl, blackCheckerGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp contUpdateToBlackChecker
+			switchColorBlackTileUpdate:
+				cmp bl, 254
+				jz endCursorUpdate
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp contUpdateToBlackChecker
+
+		updateToMoveTile:
+
+		updateToEmptyTile:
+			mov bh, 0
+			mov cx, prevCol
+			mov dx, prevRow
+			add cx, cursorLength
+			add dx, cursorLength
+			contUpdateToEmpty:
+				int 10h
+				dec dx
+				cmp dx, prevRow
+				jnz contUpdateToEmpty
+				add dx, cursorLength
+				dec cx
+				cmp cx, prevCol
+				jnz contUpdateToEmpty		
+			jmp endCursorUpdate
+
+		endCursorUpdate:
+			mov bx, tempBx
+			mov si, tempSi
+			mov oppositeColor, 15
+			mov currentColor, 0
+			mov bx, tempBx
+			mov si, tempSi
+			mov dx, currentRow
+			mov cx, currentCol
+			jmp WaitForInput
 
 	gotoMakeMove:
 		jmp MakeMove
