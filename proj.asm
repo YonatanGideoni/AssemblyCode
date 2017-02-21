@@ -24,10 +24,10 @@ dseg segment
 	siDyingLeft dw 0ffh
 	bxDyingRight dw 0ffh
 	siDyingRight dw 0ffh
-	eatTile = '5'
+	eatTile = 5
 	blackCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,7,13,7,16,255,16,5,19,5,15,255,14,5,23,5,13,255,13,4,27,4,12,255,12,4,29,4,11,255,11,3,33,3,10,255,10,3,35,3,9,255,9,3,37,3,8,255,5,1,2,3,39,3,7,255,8,3,39,3,7,255,7,3,41,3,6,255,6,3,43,3,5,255,6,3,43,3,5,255,5,3,45,3,4,255,5,3,45,3,4,255,5,2,47,2,4,255,4,3,47,3,3,255,4,3,47,3,3,255,4,2,49,2,3,255,4,2,49,2,3,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,4,2,49,2,3,255,4,2,49,2,3,255,4,3,47,3,3,255,4,3,47,3,3,255,5,2,47,2,4,255,5,3,45,3,4,255,5,3,45,3,4,255,6,3,43,3,5,255,6,3,43,3,5,255,7,3,41,3,6,255,8,3,39,3,7,255,8,3,39,3,7,255,9,3,37,3,8,255,10,3,35,3,9,255,11,3,33,3,10,255,12,4,29,4,11,255,13,4,27,4,12,255,14,5,23,5,13,255,16,5,19,5,15,255,17,7,13,7,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
 	whiteCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,27,16,255,16,29,15,255,14,33,13,255,13,35,12,255,12,37,11,255,11,39,10,255,10,41,9,255,9,43,8,255,8,45,7,255,8,45,7,255,7,47,6,255,6,49,5,255,6,49,5,255,5,51,4,255,5,51,4,255,5,51,4,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,5,51,4,255,5,51,4,255,5,51,4,255,6,49,5,255,6,49,5,255,7,47,6,255,8,45,7,255,8,45,7,255,9,43,8,255,10,41,9,255,11,39,10,255,12,37,11,255,13,35,12,255,14,33,13,255,16,29,15,255,17,27,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
-	emptyTile db 60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,60,255,254
+	moveTileGraphics db 60,255,60,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,60,255,60,254
 	currentRow dw 0
 	currentCol dw 0
 	graphicsIndex db 0
@@ -41,6 +41,7 @@ dseg segment
 	prevRow dw ?
 	arrCol db 0
 	arrRow db ?
+	moveTileColor = 4
 dseg ends
 
 cseg segment
@@ -332,13 +333,13 @@ assume cs:cseg, ds:dseg
 				inc di
 				mov bl, whiteCheckerGraphics[di]
 				cmp bl, 255
-				jnz switchColorWhiteTileUpdate			
+				jnz switchColorWhiteCheckerUpdate			
 				inc di
 				mov bl, whiteCheckerGraphics[di]
 				dec cx
 				add dx, tileLength
 				jmp contUpdateToWhiteChecker
-			switchColorWhiteTileUpdate:
+			switchColorWhiteCheckerUpdate:
 				cmp bl, 254
 				jz gotoendCursorUpdate
 				mov al, oppositeColor
@@ -368,13 +369,13 @@ assume cs:cseg, ds:dseg
 				inc di
 				mov bl, blackCheckerGraphics[di]
 				cmp bl, 255
-				jnz switchColorBlackTileUpdate			
+				jnz switchColorBlackCheckerUpdate			
 				inc di
 				mov bl, blackCheckerGraphics[di]
 				dec cx
 				add dx, tileLength
 				jmp contUpdateToBlackChecker
-			switchColorBlackTileUpdate:
+			switchColorBlackCheckerUpdate:
 				cmp bl, 254
 				jz endCursorUpdate
 				mov al, oppositeColor
@@ -416,23 +417,23 @@ assume cs:cseg, ds:dseg
 
 	gotoMakeMove:
 		jmp MakeMove
+
 	gotoWaitForInput:
 		jmp WaitForInput
 
 	CheckMove:
-		mov ah, 8
-		int 10h
+		mov al, checkers[bx][si]
 		cmp al, eatTile
 		jz gotoCannibalMove
-		cmp al, ch
+		cmp al, currentChecker
 		jnz gotoWaitForInput
-		cmp ch, '4'
+		cmp currentChecker, 4
 		jz gotoMakeMove
 		mov bxLeft, 0ffh
 		mov bxRight, 0ffh
 		mov siLeft, 0ffh
 		mov siRight, 0ffh
-		cmp ch, '3'
+		cmp currentChecker, 3
 		jz Check3
 		jmp Check2
 
@@ -440,13 +441,15 @@ assume cs:cseg, ds:dseg
 		jmp NoLeftMove3
 	gotoCannibalMove:
 		jmp CannibalMove
+	gotoEatLeft3:
+		jmp EatLeft3
 
 	Check3:
 		cmp bx, len0-1		;check if on left side of board
 		jz gotoNoLeftMove3
 		
 		cmp checkers[bx+1][si-len1], 1		;check if neutral tile
-		jnz EatLeft3
+		jnz gotoEatLeft3
 		mov checkers[bx+1][si-len1], 4   ;4 =moveable tile
 		mov bxLeft, bx
 		inc bxLeft		;bxLeft=bx+1
@@ -454,25 +457,47 @@ assume cs:cseg, ds:dseg
 		sub siLeft, len1		;siLeft=si-len1
 		mov pressedBx, bx
 		mov pressedSi, si
-		mov dl, bl
-		inc dl		;dl=bxLeft
-		mov ax, siLeft
-		mov bl, len1
-		div bl		; dh = row = si % len1
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '4'
-		int 21h
-		inc dh		;return cursor to pressed tile
-		mov bx, pressedBx
-		mov dl, bl
-		int 10h
-		mov si, pressedSi
-		mov ch, '4'
-		cmp bx, 0
-		jz gotoNoRightMove3
-		jmp NoLeftMove3
+		mov bh, 0
+		mov al, moveTileColor
+		mov ah, 0ch
+		mov di, 0
+		mov bl, moveTileGraphics[di]
+		mov oppositeColor, 0
+		mov currentColor, moveTileColor
+		moveTileLeft3:
+				int 10h
+				dec dx
+				dec bl
+				jnz moveTileLeft3
+				inc di
+				mov bl, moveTileGraphics[di]
+				cmp bl, 255
+				jnz switchColorMoveTileLeft3		
+				inc di
+				mov bl, moveTileGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp moveTileLeft3
+			switchColorMoveTileLeft3:
+				cmp bl, 254
+				jz endMoveTileLeft3
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp moveTileLeft3
+		
+		endMoveTileLeft3:
+			mov oppositeColor, 15
+			mov currentColor, 0
+			mov bx, pressedBx
+			mov currentChecker, 4
+			add dx, tileLength
+			add cx, tileLength-1
+			cmp bx, 0
+			jz gotoNoRightMove3
+			jmp NoLeftMove3
 
 	EatLeft3:
 		cmp checkers[bx+1][si-len1], 3
@@ -508,17 +533,19 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		int 10h
 		mov si, pressedSi
-		mov ch, '4'
+		mov currentChecker, 4
 		cmp bx, 0
 		jz gotoNoRightMove3
 		jmp NoLeftMove3
 
 	gotoNoRightMove3:
 		jmp NoRightMove3
+	gotoEatRight3:
+		jmp EatRight3
 
 	NoLeftMove3:
 		cmp checkers[bx-1][si-len1], 1
-		jnz EatRight3
+		jnz gotoEatRight3
 		mov checkers[bx-1][si-len1], 4
 		mov bxRight, bx
 		dec bxRight
@@ -526,23 +553,47 @@ assume cs:cseg, ds:dseg
 		sub siRight, len1	
 		mov pressedBx, bx
 		mov pressedSi, si
-		mov dl, bl
-		dec dl
-		mov ax, siRight
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '4'
-		int 21h
-		inc dh
-		mov bx, pressedBx
-		mov dl, bl
-		int 10h
-		mov si, pressedSi
-		mov ch, '4'
-		jmp NoRightMove3
+		mov bh, 0
+		mov al, moveTileColor
+		mov ah, 0ch
+		mov di, 0
+		mov bl, moveTileGraphics[di]
+		mov oppositeColor, 0
+		add cx, 2*tileLength
+		mov currentColor, moveTileColor
+		moveTileRight3:
+				int 10h
+				dec dx
+				dec bl
+				jnz moveTileRight3
+				inc di
+				mov bl, moveTileGraphics[di]
+				cmp bl, 255
+				jnz switchColorMoveTileRight3		
+				inc di
+				mov bl, moveTileGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp moveTileRight3
+			switchColorMoveTileRight3:
+				cmp bl, 254
+				jz endMoveTileRight3
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp moveTileRight3
+		
+		endMoveTileRight3:
+			mov oppositeColor, 15
+			mov currentColor, 0
+			mov bx, pressedBx
+			mov currentChecker, 4
+			add dx, tileLength
+			sub cx, tileLength+1
+		NoRightMove3:
+			jmp WaitForInput
 
 	EatRight3:
 		cmp checkers[bx-1][si-len1], 3
@@ -578,17 +629,20 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		int 10h
 		mov si, pressedSi
-		mov ch, '4'
-
-	NoRightMove3:
+		mov currentChecker, 4
 		jmp WaitForInput
+
+	gotoNoLeftMove2:
+		jmp NoLeftMove2
+	gotoEatLeft2:
+		jmp EatLeft2
 
 	Check2:
 		cmp bx, len0-1
 		jz gotoNoLeftMove2
 		
 		cmp checkers[bx+1][si+len1], 1
-		jnz EatLeft2
+		jnz gotoEatLeft2
 		mov checkers[bx+1][si+len1], 4
 		mov bxLeft, bx
 		inc bxLeft
@@ -596,26 +650,51 @@ assume cs:cseg, ds:dseg
 		add siLeft, len1
 		mov pressedBx, bx
 		mov pressedSi, si
-		mov dl, bl
-		inc dl
-		mov ax, siLeft
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '4'
-		int 21h
-		dec dh
-		mov bx, pressedBx
-		mov dl, bl
-		int 10h
-		mov si, pressedSi
-		mov ch, '4'
-		cmp bx, 0
-		jz gotoNoRightMove2
-	gotoNoLeftMove2:
-		jmp NoLeftMove2
+		mov bh, 0
+		mov al, moveTileColor
+		mov ah, 0ch
+		mov di, 0
+		add dx, 2*tileLength
+		mov bl, moveTileGraphics[di]
+		mov oppositeColor, 0
+		mov currentColor, moveTileColor
+		moveTileLeft2:
+				int 10h
+				dec dx
+				dec bl
+				jnz moveTileLeft2
+				inc di
+				mov bl, moveTileGraphics[di]
+				cmp bl, 255
+				jnz switchColorMoveTileLeft2		
+				inc di
+				mov bl, moveTileGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp moveTileLeft2
+			switchColorMoveTileLeft2:
+				cmp bl, 254
+				jz endMoveTileLeft2
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp moveTileLeft2
+		
+		endMoveTileLeft2:
+			mov oppositeColor, 15
+			mov currentColor, 0
+			mov bx, pressedBx
+			mov currentChecker, 4
+			sub dx, tileLength
+			add cx, tileLength-1
+			cmp bx, 0
+			jz gotoNoRightMove2
+			jmp NoLeftMove2
+
+	gotoNoRightMove2:
+		jmp NoRightMove2
 
 	EatLeft2:
 		cmp checkers[bx+1][si+len1], 2
@@ -651,17 +730,16 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		int 10h
 		mov si, pressedSi
-		mov ch, '4'
+		mov currentChecker, 4
 		cmp bx, 0
 		jz gotoNoRightMove2
 		jmp NoLeftMove2
-
-	gotoNoRightMove2:
-		jmp NoRightMove2
+	gotoEatRight2:
+		jmp EatRight2
 
 	NoLeftMove2:
 		cmp checkers[bx-1][si+len1], 1
-		jnz EatRight2
+		jnz gotoEatRight2
 		mov checkers[bx-1][si+len1], 4
 		mov bxRight, bx
 		dec bxRight
@@ -669,23 +747,50 @@ assume cs:cseg, ds:dseg
 		add siRight, len1	
 		mov pressedBx, bx
 		mov pressedSi, si
-		mov dl, bl
-		dec dl
-		mov ax, siRight
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '4'
-		int 21h
-		dec dh
-		mov bx, pressedBx
-		mov dl, bl
-		int 10h
-		mov si, pressedSi
-		mov ch, '4'
-		jmp NoRightMove2
+		int 3
+		add dx, 2*tileLength
+		add cx, 2*tileLength
+		mov bh, 0
+		mov al, moveTileColor
+		mov ah, 0ch
+		mov di, 0
+		mov bl, moveTileGraphics[di]
+		mov oppositeColor, 0		
+		mov currentColor, moveTileColor
+		moveTileRight2:
+				int 10h
+				dec dx
+				dec bl
+				jnz moveTileRight2
+				inc di
+				mov bl, moveTileGraphics[di]
+				cmp bl, 255
+				jnz switchColorMoveTileRight2		
+				inc di
+				mov bl, moveTileGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp moveTileRight2
+			switchColorMoveTileRight2:
+				cmp bl, 254
+				jz endMoveTileRight2
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp moveTileRight2
+		
+		endMoveTileRight2:
+			int 3
+			mov oppositeColor, 15
+			mov currentColor, 0
+			mov bx, pressedBx
+			mov currentChecker, 4
+			sub dx, tileLength
+			sub cx, tileLength + 1
+		NoRightMove2:
+			jmp WaitForInput
 
 	EatRight2:
 		cmp checkers[bx-1][si+len1], 2
@@ -721,16 +826,12 @@ assume cs:cseg, ds:dseg
 		mov dl, bl
 		int 10h
 		mov si, pressedSi
-		mov ch, '4'
-
-	NoRightMove2:
-		jmp WaitForInput
+		mov currentChecker, 4
 	
 	CannibalMove:
 		mov tempBx, bx
 		mov tempSi, si
-		mov ch, currentChecker
-		add ch, '0'
+		add currentChecker, '0'
 
 		mov dl, currentChecker
 		mov checkers[bx][si], dl
@@ -741,7 +842,7 @@ assume cs:cseg, ds:dseg
 		mov dh, al
 		mov ah, 2
 		int 10h
-		mov dl, ch
+		mov dl, currentChecker
 		int 21h
 
 		mov bx, tempBx
@@ -838,12 +939,12 @@ assume cs:cseg, ds:dseg
 		cmp currentChecker, 3
 		jnz SwitchTo3
 		mov currentChecker, 2
-		mov ch, '2'
+		mov currentChecker, '2'
 		dec blackCount
 		jmp WinCheck
 	SwitchTo3:
 		mov currentChecker, 3
-		mov ch, '3'
+		mov currentChecker, '3'
 		dec whiteCount
 		jmp WinCheck
 
@@ -918,15 +1019,12 @@ assume cs:cseg, ds:dseg
 		mov bx, tempBx		;move back to pressed tile
 		mov dl, bl
 		int 10h
-				
-		mov ch, currentChecker
-		cmp ch, 3
+		
+		cmp currentChecker, 3
 		jz switchTo2
-		mov ch, 4
+		mov currentChecker, 4
 	SwitchTo2:
-		dec ch
-		mov currentChecker, ch
-		add ch, '0'
+		dec currentChecker
 		jmp WinCheck
 
 	WinCheck:
@@ -938,9 +1036,9 @@ assume cs:cseg, ds:dseg
 		jz Finish
 		cmp whiteCount, 0
 		jz Finish
-		cmp dh, 0
+		cmp arrRow, 0
 		jz Finish
-		cmp dh, len1-1
+		cmp arrRow, len1-1
 		jz Finish
 		jmp WaitForInput
 
