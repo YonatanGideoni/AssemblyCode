@@ -19,7 +19,7 @@ dseg segment
 	blackCount db 12
 	tempBx dw ?
 	tempSi dw ?
-	currentChecker db 3
+	currentChecker db 2
 	bxDyingLeft dw 0ffh
 	siDyingLeft dw 0ffh
 	bxDyingRight dw 0ffh
@@ -27,7 +27,7 @@ dseg segment
 	eatTile = 5
 	blackCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,7,13,7,16,255,16,5,19,5,15,255,14,5,23,5,13,255,13,4,27,4,12,255,12,4,29,4,11,255,11,3,33,3,10,255,10,3,35,3,9,255,9,3,37,3,8,255,5,1,2,3,39,3,7,255,8,3,39,3,7,255,7,3,41,3,6,255,6,3,43,3,5,255,6,3,43,3,5,255,5,3,45,3,4,255,5,3,45,3,4,255,5,2,47,2,4,255,4,3,47,3,3,255,4,3,47,3,3,255,4,2,49,2,3,255,4,2,49,2,3,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,3,3,49,3,2,255,4,2,49,2,3,255,4,2,49,2,3,255,4,3,47,3,3,255,4,3,47,3,3,255,5,2,47,2,4,255,5,3,45,3,4,255,5,3,45,3,4,255,6,3,43,3,5,255,6,3,43,3,5,255,7,3,41,3,6,255,8,3,39,3,7,255,8,3,39,3,7,255,9,3,37,3,8,255,10,3,35,3,9,255,11,3,33,3,10,255,12,4,29,4,11,255,13,4,27,4,12,255,14,5,23,5,13,255,16,5,19,5,15,255,17,7,13,7,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
 	whiteCheckerGraphics db 60,255,60,255,60,255,26,9,25,255,22,17,21,255,19,23,18,255,17,27,16,255,16,29,15,255,14,33,13,255,13,35,12,255,12,37,11,255,11,39,10,255,10,41,9,255,9,43,8,255,8,45,7,255,8,45,7,255,7,47,6,255,6,49,5,255,6,49,5,255,5,51,4,255,5,51,4,255,5,51,4,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,3,55,2,255,4,53,3,255,4,53,3,255,4,53,3,255,4,53,3,255,5,51,4,255,5,51,4,255,5,51,4,255,6,49,5,255,6,49,5,255,7,47,6,255,8,45,7,255,8,45,7,255,9,43,8,255,10,41,9,255,11,39,10,255,12,37,11,255,13,35,12,255,14,33,13,255,16,29,15,255,17,27,16,255,19,23,18,255,22,17,21,255,26,9,25,255,60,255,60,254
-	moveTileGraphics db 60,255,60,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,2,56,2,255,60,255,60,254
+	moveTileGraphics db 60,255,60,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,5,50,5,255,60,255,60,254
 	currentRow dw 0
 	currentCol dw 0
 	graphicsIndex db 0
@@ -126,7 +126,6 @@ assume cs:cseg, ds:dseg
 			mov bh, 0
 			jmp contBlackTile
 			
-
 		createWhiteTile:
 			mov al, 0
 			mov ah, 0ch
@@ -377,7 +376,7 @@ assume cs:cseg, ds:dseg
 				jmp contUpdateToBlackChecker
 			switchColorBlackCheckerUpdate:
 				cmp bl, 254
-				jz endCursorUpdate
+				jz gotoEndCursorUpdate
 				mov al, oppositeColor
 				mov bh, currentColor
 				mov oppositeColor, bh
@@ -386,6 +385,39 @@ assume cs:cseg, ds:dseg
 				jmp contUpdateToBlackChecker
 
 		updateToMoveTile:
+			mov bh, 0
+			mov al, moveTileColor
+			mov oppositeColor, 0
+			mov currentColor, moveTileColor
+			mov di, 0
+			mov bl, moveTileGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdateToMoveTile:
+					int 10h
+					dec dx
+					dec bl
+					jnz contUpdateToMoveTile
+					inc di
+					mov bl, moveTileGraphics[di]
+					cmp bl, 255
+					jnz switchColorMoveTileUpdate			
+					inc di
+					mov bl, moveTileGraphics[di]
+					dec cx
+					add dx, tileLength
+					jmp contUpdateToMoveTile
+				switchColorMoveTileUpdate:
+					cmp bl, 254
+					jz endCursorUpdate
+					mov al, oppositeColor
+					mov bh, currentColor
+					mov oppositeColor, bh
+					mov currentColor, al
+					mov bh, 0
+					jmp contUpdateToMoveTile
 
 		updateToEmptyTile:
 			mov bh, 0
@@ -457,6 +489,7 @@ assume cs:cseg, ds:dseg
 		sub siLeft, len1		;siLeft=si-len1
 		mov pressedBx, bx
 		mov pressedSi, si
+		add cx, 2*tileLength
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
@@ -494,7 +527,7 @@ assume cs:cseg, ds:dseg
 			mov bx, pressedBx
 			mov currentChecker, 4
 			add dx, tileLength
-			add cx, tileLength-1
+			sub cx, tileLength+1
 			cmp bx, 0
 			jz gotoNoRightMove3
 			jmp NoLeftMove3
@@ -559,7 +592,6 @@ assume cs:cseg, ds:dseg
 		mov di, 0
 		mov bl, moveTileGraphics[di]
 		mov oppositeColor, 0
-		add cx, 2*tileLength
 		mov currentColor, moveTileColor
 		moveTileRight3:
 				int 10h
@@ -591,7 +623,7 @@ assume cs:cseg, ds:dseg
 			mov bx, pressedBx
 			mov currentChecker, 4
 			add dx, tileLength
-			sub cx, tileLength+1
+			add cx, tileLength-1
 		NoRightMove3:
 			jmp WaitForInput
 
@@ -655,6 +687,7 @@ assume cs:cseg, ds:dseg
 		mov ah, 0ch
 		mov di, 0
 		add dx, 2*tileLength
+		add cx, 2*tileLength
 		mov bl, moveTileGraphics[di]
 		mov oppositeColor, 0
 		mov currentColor, moveTileColor
@@ -688,7 +721,7 @@ assume cs:cseg, ds:dseg
 			mov bx, pressedBx
 			mov currentChecker, 4
 			sub dx, tileLength
-			add cx, tileLength-1
+			sub cx, tileLength + 1
 			cmp bx, 0
 			jz gotoNoRightMove2
 			jmp NoLeftMove2
@@ -747,9 +780,7 @@ assume cs:cseg, ds:dseg
 		add siRight, len1	
 		mov pressedBx, bx
 		mov pressedSi, si
-		int 3
 		add dx, 2*tileLength
-		add cx, 2*tileLength
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
@@ -782,13 +813,12 @@ assume cs:cseg, ds:dseg
 				jmp moveTileRight2
 		
 		endMoveTileRight2:
-			int 3
 			mov oppositeColor, 15
 			mov currentColor, 0
 			mov bx, pressedBx
 			mov currentChecker, 4
 			sub dx, tileLength
-			sub cx, tileLength + 1
+			add cx, tileLength-1
 		NoRightMove2:
 			jmp WaitForInput
 
