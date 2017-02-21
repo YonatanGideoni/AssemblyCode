@@ -13,13 +13,22 @@ dseg segment
 	bxRight dw 0ffh
 	siLeft dw 0ffh
 	siRight dw 0ffh
+	cxLeft dw 0ffh
+	cxRight dw 0ffh
+	dxLeft dw 0ffh
+	dxRight dw 0ffh
 	pressedBx dw 0ffh
 	pressedSi dw 0ffh
+	pressedCx dw 0ffh
+	pressedDx dw 0ffh
 	whiteCount db 12
 	blackCount db 12
 	tempBx dw ?
 	tempSi dw ?
+	tempCx dw ?
+	tempDx dw ?
 	currentChecker db 2
+	turnVal db 2
 	bxDyingLeft dw 0ffh
 	siDyingLeft dw 0ffh
 	bxDyingRight dw 0ffh
@@ -135,7 +144,7 @@ assume cs:cseg, ds:dseg
 			add cx, tileLength
 			mov dx, currentCol
 			add dx, tileLength
-		contwhiteTile:
+		contWhiteTile:
 			int 10h
 			dec dx
 			dec bl
@@ -489,7 +498,11 @@ assume cs:cseg, ds:dseg
 		sub siLeft, len1		;siLeft=si-len1
 		mov pressedBx, bx
 		mov pressedSi, si
+		mov pressedCx, cx
+		mov pressedDx, dx
 		add cx, 2*tileLength
+		mov cxLeft, cx
+		mov dxLeft, dx
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
@@ -586,6 +599,10 @@ assume cs:cseg, ds:dseg
 		sub siRight, len1	
 		mov pressedBx, bx
 		mov pressedSi, si
+		mov pressedCx, cx
+		mov pressedDx, dx
+		mov dxRight, dx
+		mov cxRight, cx
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
@@ -682,12 +699,16 @@ assume cs:cseg, ds:dseg
 		add siLeft, len1
 		mov pressedBx, bx
 		mov pressedSi, si
+		mov pressedCx, cx
+		mov pressedDx, dx
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
 		mov di, 0
 		add dx, 2*tileLength
 		add cx, 2*tileLength
+		mov cxLeft, cx
+		mov dxLeft, dx
 		mov bl, moveTileGraphics[di]
 		mov oppositeColor, 0
 		mov currentColor, moveTileColor
@@ -740,6 +761,8 @@ assume cs:cseg, ds:dseg
 		jnz NoLeftMove2
 		mov pressedBx, bx
 		mov pressedSi, si
+		mov pressedCx, cx
+		mov pressedDx, dx
 		inc bx
 		mov bxDyingLeft, bx
 		add si, len1
@@ -781,6 +804,8 @@ assume cs:cseg, ds:dseg
 		mov pressedBx, bx
 		mov pressedSi, si
 		add dx, 2*tileLength
+		mov dxRight, dx
+		mov cxRight, cx
 		mov bh, 0
 		mov al, moveTileColor
 		mov ah, 0ch
@@ -974,7 +999,6 @@ assume cs:cseg, ds:dseg
 		jmp WinCheck
 	SwitchTo3:
 		mov currentChecker, 3
-		mov currentChecker, '3'
 		dec whiteCount
 		jmp WinCheck
 
@@ -983,8 +1007,14 @@ assume cs:cseg, ds:dseg
 		mov bxDyingLeft, 0ffh
 		mov siDyingRight, 0ffh
 		mov siDyingLeft, 0ffh
+		mov arrCol, bl
 		mov tempBx, bx
 		mov tempSi, si
+		mov tempCx, cx
+		mov tempDx, dx
+		mov al, 0
+		mov ah, 0ch
+
 		cmp bxRight, 0ffh
 		jz SwitchOnlyLeft
 
@@ -992,69 +1022,168 @@ assume cs:cseg, ds:dseg
 		mov si, siRight
 		mov checkers[bx][si], 1
 
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
+		mov cx, cxRight
+		mov dx, dxRight
+		sub cxRight, tileLength
+		sub dxRight, tileLength
+
+		switchNeutralRight:
+			mov bh, 0
+			contSwitchNeutralRight:
+				int 10h
+				dec dx
+				cmp dx, dxRight
+				jnz contSwitchNeutralRight
+				add dx, tileLength
+				dec cx
+				cmp cx, cxRight
+				jnz contSwitchNeutralRight
+		
 		cmp bxLeft, 0ffh
 		jz SwitchOnlyRight
 	SwitchOnlyLeft:
 		mov bx, bxLeft
 		mov si, siLeft
 		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, siLeft
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
+		mov cx, cxLeft
+		mov dx, dxLeft
+		sub cxLeft, tileLength
+		sub dxLeft, tileLength
 
+		switchNeutralLeft:
+			mov bh, 0
+			contSwitchNeutralLeft:
+				int 10h
+				dec dx
+				cmp dx, dxLeft
+				jnz contSwitchNeutralLeft
+				add dx, tileLength
+				dec cx
+				cmp cx, cxLeft
+				jnz contSwitchNeutralLeft
+		
 	SwitchOnlyRight:
 		mov bx, pressedBx		;remove moved tile from previous position
 		mov si, pressedSi
 		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
-
+		mov cx, pressedCx
+		mov dx, pressedDx
+		add cx, tileLength
+		add dx, tileLength
+		mov al, 0
+		removeMovedTile:
+			int 10h
+			dec dx
+			cmp dx, pressedDx
+			jnz removeMovedTile
+			add dx, tileLength
+			dec cx
+			cmp cx, pressedCx
+			jnz removeMovedTile
+		
 		mov bx, tempBx		;update pressed tile
 		mov si, tempSi
-		mov al, currentChecker
+		mov al, turnVal
 		mov checkers[bx][si], al
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, currentChecker
-		add dl, '0'
-		int 21h
-
-		mov bx, tempBx		;move back to pressed tile
-		mov dl, bl
-		int 10h
+		cmp al, 2
+		jz updatePressedToBlackChecker
+		jmp updatePressedToWhiteChecker
 		
-		cmp currentChecker, 3
+		updatePressedToBlackChecker:
+			inc arrRow
+			mov bh, 0
+			mov al, 0
+			mov di, 0
+			mov bl, blackCheckerGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdatePressedToBlackChecker:
+				int 10h
+				dec dx
+				dec bl
+				jnz contUpdatePressedToBlackChecker
+				inc di
+				mov bl, blackCheckerGraphics[di]
+				cmp bl, 255
+				jnz switchPressedColorBlackCheckerUpdate			
+				inc di
+				mov bl, blackCheckerGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp contUpdatePressedToBlackChecker
+			switchPressedColorBlackCheckerUpdate:
+				cmp bl, 254
+				jz updatePressedCursor
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp contUpdatePressedToBlackChecker
+
+			updatePressedToWhiteChecker:
+			dec arrRow
+			mov bh, 0
+			mov al, 0
+			mov di, 0
+			mov bl, whiteCheckerGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdatePressedToWhiteChecker:
+				int 10h
+				dec dx
+				dec bl
+				jnz contUpdatePressedToWhiteChecker
+				inc di
+				mov bl, whiteCheckerGraphics[di]
+				cmp bl, 255
+				jnz switchPressedColorWhiteCheckerUpdate			
+				inc di
+				mov bl, whiteCheckerGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp contUpdatePressedToWhiteChecker
+			switchPressedColorWhiteCheckerUpdate:
+				cmp bl, 254
+				jz updatePressedCursor
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp contUpdatePressedToWhiteChecker
+		
+		UpdatePressedCursor:
+		mov al, 1
+		mov cx, prevCol
+		mov dx, prevRow
+		add cx, cursorLength
+		add dx, cursorLength
+		contUpdatePressedCursor:
+			int 10h
+			dec cx
+			cmp cx, prevCol
+			jnz contUpdatePressedCursor
+			add cx, cursorLength
+			dec dx
+			cmp dx, prevRow
+			jnz contUpdatePressedCursor
+
+		mov cx, prevCol
+		mov dx, prevRow
+		mov bx, tempBx
+
+		cmp turnVal, 3
 		jz switchTo2
-		mov currentChecker, 4
+		mov turnVal, 4
 	SwitchTo2:
-		dec currentChecker
+		dec turnVal
+		mov al, turnVal
+		mov currentChecker, al
 		jmp WinCheck
 
 	WinCheck:
