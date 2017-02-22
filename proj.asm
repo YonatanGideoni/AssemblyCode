@@ -315,10 +315,15 @@ assume cs:cseg, ds:dseg
 		cmp bh, 1
 		jz updateToBlackTile
 		cmp bh, 2
-		jz updateToBlackChecker
+		jz gotoUpdateToBlackChecker
 		cmp bh, 3
 		jz updateToWhiteChecker
+		cmp bh, 5
+		jz updateToPossibleMoveTile
 		jmp updateToMoveTile
+
+		gotoUpdateToBlackChecker:
+			jmp updateToBlackChecker
 
 		updateToWhiteTile:
 			mov al, 15
@@ -327,6 +332,41 @@ assume cs:cseg, ds:dseg
 		updateToBlackTile:
 			mov al, 0
 			jmp updateToEmptyTile
+
+		updateToPossibleMoveTile:
+			mov bh, 0
+			mov al, moveTileColor
+			mov currentColor, al
+			mov oppositeColor, 0
+			mov di, 0
+			mov bl, moveTileGraphics[di]
+			mov cx, prevCol
+			add cx, tileLength
+			mov dx, prevRow
+			add dx, tileLength
+			contUpdateToPossibleMoveTile:
+				int 10h
+				dec dx
+				dec bl
+				jnz contUpdateToPossibleMoveTile
+				inc di
+				mov bl, moveTileGraphics[di]
+				cmp bl, 255
+				jnz switchColorPossibleMoveTile	
+				inc di
+				mov bl, moveTileGraphics[di]
+				dec cx
+				add dx, tileLength
+				jmp contUpdateToPossibleMoveTile
+			switchColorPossibleMoveTile:
+				cmp bl, 254
+				jz gotoendCursorUpdate
+				mov al, oppositeColor
+				mov bh, currentColor
+				mov oppositeColor, bh
+				mov currentColor, al
+				mov bh, 0
+				jmp contUpdateToPossibleMoveTile
 
 		updateToWhiteChecker:
 			mov bh, 0
@@ -575,6 +615,7 @@ assume cs:cseg, ds:dseg
 		sub si, len1
 		mov bxLeft, bx
 		mov siLeft, si
+		mov checkers[bx][si], 5
 		add cx, 2*tileLength
 		mov cxDyingLeft, cx
 		mov dxDyingLeft, dx
@@ -706,6 +747,7 @@ assume cs:cseg, ds:dseg
 		sub si, len1
 		mov bxRight, bx
 		mov siRight, si
+		mov checkers[bx][si], 5
 		mov cxDyingRight, cx
 		mov dxDyingRight, dx
 		sub cx, tileLength
@@ -759,7 +801,6 @@ assume cs:cseg, ds:dseg
 		jmp EatLeft2
 
 	Check2:
-		int 3
 		cmp bx, len0-1
 		jz gotoNoLeftMove2
 		
@@ -846,6 +887,7 @@ assume cs:cseg, ds:dseg
 		add si, len1
 		mov bxLeft, bx
 		mov siLeft, si
+		mov checkers[bx][si], 5
 		add cx, 2*tileLength
 		add dx, 2*tileLength
 		mov cxDyingLeft, cx
@@ -977,6 +1019,7 @@ assume cs:cseg, ds:dseg
 		add si, len1
 		mov bxRight, bx
 		mov siRight, si
+		mov checkers[bx][si], 5
 		add dx, 2*tileLength
 		mov cxDyingRight, cx
 		mov dxDyingRight, dx
