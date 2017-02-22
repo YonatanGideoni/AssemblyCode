@@ -731,7 +731,7 @@ assume cs:cseg, ds:dseg
 	EatRight3:
 		cmp checkers[bx-1][si-len1], 3
 		jz NoRightMove3
-		cmp bx, 1
+		cmp bx, 2
 		jc NoRightMove3
 		cmp si, 2*len0
 		jc NoRightMove3
@@ -1005,10 +1005,12 @@ assume cs:cseg, ds:dseg
 	EatRight2:
 		cmp checkers[bx-1][si+len1], 2
 		jz NoRightMove2
-		cmp bx, 1
+		cmp bx, 2
 		jc NoRightMove2
 		cmp si, (len1-2)*len0
 		jnc NoRightMove2
+		cmp checkers[bx-2][si+2*len1], 1
+		jnz NoRightMove2
 		mov pressedBx, bx
 		mov pressedSi, si
 		mov pressedCx, cx
@@ -1130,7 +1132,7 @@ assume cs:cseg, ds:dseg
 		mov cx, tempCx
 		mov dx, tempDx
 
-		cmp currentChecker, 3
+		cmp turnVal, 3
 		jnz blackKilled
 		dec whiteCount
 		jmp MakeMove
@@ -1226,7 +1228,6 @@ assume cs:cseg, ds:dseg
 		jmp updatePressedToWhiteChecker
 		
 		updatePressedToBlackChecker:
-			inc arrRow
 			mov bh, 0
 			mov al, 0
 			mov di, 0
@@ -1260,7 +1261,6 @@ assume cs:cseg, ds:dseg
 				jmp contUpdatePressedToBlackChecker
 
 			updatePressedToWhiteChecker:
-			dec arrRow
 			mov bh, 0
 			mov al, 0
 			mov di, 0
