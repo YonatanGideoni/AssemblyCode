@@ -27,6 +27,8 @@ dseg segment
 	tempSi dw ?
 	tempCx dw ?
 	tempDx dw ?
+	temp2Cx dw ?
+	temp2Dx dw ?
 	currentChecker db 3
 	turnVal db 3
 	bxDyingLeft dw 0ffh
@@ -1071,121 +1073,70 @@ assume cs:cseg, ds:dseg
 	CannibalMove:
 		mov tempBx, bx
 		mov tempSi, si
-		add currentChecker, '0'
+		mov tempCx, cx
+		mov tempDx, dx
 
-		mov dl, currentChecker
-		mov checkers[bx][si], dl
-		mov dl, bl
-		mov ax, si
-		mov bl, len1		;move to new tile
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, currentChecker
-		int 21h
-
-		mov bx, tempBx
 		cmp bx, bxLeft
 		jnz killRightTile		;check if right tile or left tile is killed
 						
 		mov bx, bxDyingLeft			;kill eaten tile
 		mov si, siDyingLeft
 		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
-
-		mov bx, bxRight			;clear other tile
-		mov si, siRight
-		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
-
-		jmp endCannibalTurn
+		mov cx, cxDyingLeft
+		mov dx, dxDyingLeft
+		
+		jmp killTile
 
 	killRightTile:		
 		mov bx, bxDyingRight
 		mov si, siDyingRight
 		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
+		mov cx, cxDyingRight
+		mov dx, dxDyingRight
+		
+		jmp killTile
 
-		mov bx, bxLeft
-		mov si, siLeft
-		mov checkers[bx][si], 1
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
-
-		jmp endCannibalTurn
+	killTile:
+		mov al, 0
+		mov ah, 0ch
+		mov bh, 0
+		mov temp2Cx, cx
+		mov temp2Dx, dx
+		sub temp2Cx, tileLength
+		sub temp2Dx, tileLength
+		contKillTile:
+			int 10h
+			dec dx
+			cmp dx, temp2Dx
+			jnz contKillTile
+			add dx, tileLength
+			dec cx
+			cmp cx, temp2Cx
+			jnz contKillTile
+			jmp endCannibalTurn
 
 	endCannibalTurn:
 		mov bxDyingRight, 0ffh
 		mov bxDyingLeft, 0ffh
 		mov siDyingRight, 0ffh
 		mov siDyingLeft, 0ffh
+		mov cxDyingRight, 0ffh
+		mov cxDyingLeft, 0ffh
+		mov dxDyingRight, 0ffh
+		mov dxDyingLeft, 0ffh
 
-		mov bx, pressedBx		;clear previous tile
-		mov dl, bl
-		mov si, pressedSi
-		mov checkers[bx][si], 1
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
-		mov dl, '1'
-		int 21h
-
-		mov bx, tempBx		;return to pressed tile
-		mov si, tempSi
-		mov dl, bl
-		mov ax, si
-		mov bl, len1
-		div bl
-		mov dh, al
-		mov ah, 2
-		int 10h
 		mov bx, tempBx
+		mov si, tempSi
+		mov cx, tempCx
+		mov dx, tempDx
 
 		cmp currentChecker, 3
-		jnz SwitchTo3
-		mov currentChecker, 2
-		mov currentChecker, '2'
-		dec blackCount
-		jmp WinCheck
-	SwitchTo3:
-		mov currentChecker, 3
+		jnz blackKilled
 		dec whiteCount
-		jmp WinCheck
+		jmp MakeMove
+	blackKilled:
+		dec blackCount
+		jmp MakeMove
 
 	MakeMove:
 		mov bxDyingRight, 0ffh
