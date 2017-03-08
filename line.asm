@@ -1,8 +1,18 @@
 dseg segment
-	firstSentence db "Please enter the line's starting X coordinate:$"
+	startXSentence db "Please enter the line's starting X coordinate. Press "Space" when done.$"
+	endXSentence db "Please enter the line's ending X coordinate. Press "Space" when done.$"
+	ErrorMsg db "The coordinate you have entered is out of range, please enter a smaller number.$"
+	startX dw ?
+	endX dw ?
+	startY dw ?
+	endY dw ?
 dseg ends
 
-proc getValues:
+cseg segment
+assume cs:cseg, ds:dseg
+
+getValues proc
+	mov bp, sp
 	push bx ax cx
 
 	mov cx, 0
@@ -12,7 +22,7 @@ proc getValues:
 		int 21h
 		cmp al, ' '
 		jz endFunc
-		cmp al, '9'
+		cmp al, '9'+1
 		jnc WaitForInput	;check if number inputted
 		cmp al, '0'
 		jc WaitForInput
@@ -35,12 +45,11 @@ proc getValues:
 		jnz WaitForInput
 
 	endFunc:
+		mov [bp+4], cx
 		pop cx ax bx
-		ret
-end getValues
+		ret 2
+getValues endp
 
-cseg segment
-assume cs:cseg, ds:dseg
 	Begin:
 		mov ax, dseg
 		mov ds, ax
@@ -57,12 +66,38 @@ assume cs:cseg, ds:dseg
 		int 10h
 
 		mov ah, 9
-		mov dx, offset firstSentence
+		mov dx, offset startXSentence
 		int 21h
 
 		mov dh, 1
 		mov ah, 2
 		int 10h
+	
+	reqStartX:
+		push 0
+		call getValues
+		pop ax
+		mov startX, ax
+		cmp ax, 640
+		jc reqEndX
+		mov dx, offset ErrorMsg
+		int 21h
+		jmp reqStartX
+
+	reqEndX:
+		mov ah, 9
+		mov dx, offset endXSentence
+		push 0
+		call getValues
+		pop ax
+		mov endX, ax
+		cmp ax, 640
+		jc reqStartY
+		mov dx, offset ErrorMsg
+		int 21h
+		jmp reqEndX
+
+	reqStartY:
 
 		int 3
 cseg ends
