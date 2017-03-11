@@ -52,6 +52,8 @@ getValues proc
 		jnz WaitForInput
 
 	endFunc:
+		cmp bl, 3
+		jz WaitForInput
 		mov [bp+4], cx
 		pop cx ax bx
 		ret 2
@@ -206,13 +208,59 @@ getValues endp
 		mov di, deltaY
 		mov si, deltaX
 		mov bh, 0
-		int 3
+		cmp di, 0f000h
+		jc downOct
+		mov di, 0
+		sub di, deltaY
+		mov deltaY, di
+		mov bx, di
+		add bx, di
+		sub bx, deltaX
+		mov lineError, bx
+		mov bh, 0
+		mov bl, lineColor
+		cmp di, si
+		jc drawLine_Oct2
+		jmp drawLine_Oct1
+	downOct:
 		cmp di, si
 		jc drawLine_Oct3
 		jmp drawLine_Oct4 
 
+	drawLine_Oct1:
+		cmp lineError, 0a000h		
+		jc decY_Oct1
+		inc cx
+		add lineError, di
+		add lineError, di
+		jmp drawLine_Oct1
+	decY_Oct1:
+		dec dx
+		int 10h		
+		sub lineError, si
+		sub lineError, si
+		cmp dx, endY
+		jz Finish
+		jmp drawLine_Oct1
+
+	drawLine_Oct2:
+		cmp lineError, 0a000h
+		jc incX_Oct2
+		dec dx
+		sub lineError, si
+		sub lineError, si
+		jmp drawLine_Oct2
+	incX_Oct2:
+		inc cx
+		int 10h
+		add lineError, di
+		add lineError, di
+		cmp cx, endX
+		jz Finish
+		jmp drawLine_Oct2
+
 	drawLine_Oct3:
-		cmp lineError, 0f000h		;check if overflowed
+		cmp lineError, 0a000h		;check if overflowed
 		jc incX_Oct3
 		inc dx						;inc y coordinate
 		sub lineError, si
@@ -228,7 +276,7 @@ getValues endp
 		jmp drawLine_Oct3
 
 	drawLine_Oct4:
-		cmp lineError, 0f000h		
+		cmp lineError, 0a000h		
 		jc incY_Oct4
 		inc cx
 		add lineError, di
