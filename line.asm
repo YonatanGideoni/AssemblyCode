@@ -173,11 +173,10 @@ getValues endp
 		jmp reqEndY
 
 	startLine:
-		int 3
 		mov cx, endX
 		cmp startX, cx
 		jc noSwitchCoord	;draw the line from left to right, switch coords if endX > startX
-		mov ax, endX
+		mov ax, startX
 		mov startX, cx
 		mov endX, ax
 		mov cx, endY
@@ -206,23 +205,43 @@ getValues endp
 		mov al, lineColor
 		mov di, deltaY
 		mov si, deltaX
-
-	drawLine_Oct1:
-		cmp lineError, 0ff00h
-		jc incX_Oct1
-		inc dx
-		sub lineError, si
-		sub lineError, si
-		jmp drawLine_Oct1
-	incX_Oct1:
-		inc cx
 		mov bh, 0
+		int 3
+		cmp di, si
+		jc drawLine_Oct3
+		jmp drawLine_Oct4 
+
+	drawLine_Oct3:
+		cmp lineError, 0f000h		;check if overflowed
+		jc incX_Oct3
+		inc dx						;inc y coordinate
+		sub lineError, si
+		sub lineError, si
+		jmp drawLine_Oct3
+	incX_Oct3:
+		inc cx
 		int 10h
 		add lineError, di
 		add lineError, di
-		cmp cx, endX
+		cmp cx, endX			;check if end of line
 		jz Finish
-		jmp drawLine_Oct1
+		jmp drawLine_Oct3
+
+	drawLine_Oct4:
+		cmp lineError, 0f000h		
+		jc incY_Oct4
+		inc cx
+		add lineError, di
+		add lineError, di
+		jmp drawLine_Oct4
+	incY_Oct4:
+		inc dx
+		int 10h		
+		sub lineError, si
+		sub lineError, si
+		cmp dx, endY
+		jz Finish
+		jmp drawLine_Oct4
 
 	Finish:
 		mov ah, 8
