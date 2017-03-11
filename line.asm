@@ -173,9 +173,10 @@ getValues endp
 		jmp reqEndY
 
 	startLine:
+		int 3
 		mov cx, endX
 		cmp startX, cx
-		jnc noSwitchCoord	;draw the line from left to right, switch coords if endX < startX
+		jc noSwitchCoord	;draw the line from left to right, switch coords if endX > startX
 		mov ax, endX
 		mov startX, cx
 		mov endX, ax
@@ -185,6 +186,8 @@ getValues endp
 		mov endY, ax
 
 	noSwitchCoord:
+		mov ax, 12h
+		int 10h
 		mov ax, endY
 		mov deltaY, ax
 		mov ax, startY
@@ -199,9 +202,31 @@ getValues endp
 		add ax, deltaY
 		sub ax, deltaX
 		mov lineError, ax
+		mov ah, 0ch
+		mov al, lineColor
+		mov di, deltaY
+		mov si, deltaX
 
-	drawLine:
+	drawLine_Oct1:
+		cmp lineError, 0ff00h
+		jc incX_Oct1
+		inc dx
+		sub lineError, si
+		sub lineError, si
+		jmp drawLine_Oct1
+	incX_Oct1:
+		inc cx
+		mov bh, 0
+		int 10h
+		add lineError, di
+		add lineError, di
+		cmp cx, endX
+		jz Finish
+		jmp drawLine_Oct1
 
+	Finish:
+		mov ah, 8
+		int 21h
 		int 3
 cseg ends
 end Begin
