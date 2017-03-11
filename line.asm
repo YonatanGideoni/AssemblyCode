@@ -4,10 +4,15 @@ dseg segment
 	startYSentence db "Please enter the line's starting Y coordinate. Press Space when done.$"
 	endYSentence db "Please enter the line's ending Y coordinate. Press Space when done.$"
 	ErrorMsg db "The coordinate you have entered is out of range, please enter a smaller number.$"
+	verticalError db "Please enter a different ending X coordinate, the line cannot be vertical.$"
 	startX dw ?
 	endX dw ?
 	startY dw ?
 	endY dw ?
+	deltaX dw ?
+	deltaY dw ?
+	lineError dw ?
+	lineColor db 15
 dseg ends
 
 cseg segment
@@ -111,8 +116,15 @@ getValues endp
 		mov endX, ax
 		mov dx, offset startYSentence
 		cmp ax, 640
-		jc reqStartY
+		jc verticalCheck
 		mov dx, offset ErrorMsg
+		jmp reqEndX
+	
+	verticalCheck:
+		mov cx, endX
+		cmp startX, cx
+		jnz reqStartY
+		mov dx, offset verticalError
 		jmp reqEndX
 
 	reqStartY:
@@ -158,9 +170,38 @@ getValues endp
 		cmp ax, 480
 		jc startLine
 		mov dx, offset ErrorMsg
-		jmp reqEndX
+		jmp reqEndY
 
 	startLine:
+		mov cx, endX
+		cmp startX, cx
+		jnc noSwitchCoord	;draw the line from left to right, switch coords if endX < startX
+		mov ax, endX
+		mov startX, cx
+		mov endX, ax
+		mov cx, endY
+		mov ax, startY
+		mov startY, cx
+		mov endY, ax
+
+	noSwitchCoord:
+		mov ax, endY
+		mov deltaY, ax
+		mov ax, startY
+		sub deltaY, ax
+		mov ax, endX
+		mov deltaX, ax
+		mov ax, startX
+		sub deltaX, ax
+		mov cx, startX
+		mov dx, startY
+		mov ax, deltaY
+		add ax, deltaY
+		sub ax, deltaX
+		mov lineError, ax
+
+	drawLine:
+
 		int 3
 cseg ends
 end Begin
