@@ -118,15 +118,8 @@ getValues endp
 		mov endX, ax
 		mov dx, offset startYSentence
 		cmp ax, 640
-		jc verticalCheck
+		jc reqStartY
 		mov dx, offset ErrorMsg
-		jmp reqEndX
-	
-	verticalCheck:
-		mov cx, endX
-		cmp startX, cx
-		jnz reqStartY
-		mov dx, offset verticalError
 		jmp reqEndX
 
 	reqStartY:
@@ -207,7 +200,6 @@ getValues endp
 		mov al, lineColor
 		mov di, deltaY
 		mov si, deltaX
-		int 3
 		cmp di, 0f000h
 		jc downOct
 		mov bx, startY
