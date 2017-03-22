@@ -97,34 +97,11 @@ getValues endp
 		int 21h
 		pop ax
 		mov startX, ax
-		mov dx, offset endXSentence
-		cmp ax, 640
-		jc reqEndX
-		mov dx, offset ErrorMsg
-		jmp reqStartX
-
-	reqEndX:
-		mov ah, 9
-		int 21h
-		mov dl, 10
-		mov ah, 2
-		int 21h
-		mov dl, 13
-		int 21h
-		push 0
-		call getValues
-		mov dl, 10
-		mov ah, 2
-		int 21h
-		mov dl, 13
-		int 21h
-		pop ax
-		mov endX, ax
 		mov dx, offset startYSentence
 		cmp ax, 640
 		jc reqStartY
 		mov dx, offset ErrorMsg
-		jmp reqEndX
+		jmp reqStartX
 
 	reqStartY:
 		mov ah, 9
@@ -143,11 +120,34 @@ getValues endp
 		int 21h
 		pop ax
 		mov startY, ax
-		mov dx, offset endYSentence
+		mov dx, offset endXSentence
 		cmp ax, 480
-		jc reqEndY
+		jc reqEndX
 		mov dx, offset ErrorMsg
 		jmp reqStartY
+
+	reqEndX:
+		mov ah, 9
+		int 21h
+		mov dl, 10
+		mov ah, 2
+		int 21h
+		mov dl, 13
+		int 21h
+		push 0
+		call getValues
+		mov dl, 10
+		mov ah, 2
+		int 21h
+		mov dl, 13
+		int 21h
+		pop ax
+		mov endX, ax
+		mov dx, offset endYSentence
+		cmp ax, 640
+		jc reqEndY
+		mov dx, offset ErrorMsg
+		jmp reqEndX
 
 	reqEndY:
 		mov ah, 9
