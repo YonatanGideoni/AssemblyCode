@@ -62,6 +62,10 @@ getValues endp
 	Begin:
 		mov ax, dseg
 		mov ds, ax
+	startDraw:
+		mov ax, 3	;switch to text mode, for when drawing extra lines
+		int 10h
+
 		mov cx, 25
 		mov ah, 2
 		mov dl, 10
@@ -143,7 +147,7 @@ getValues endp
 		cmp ax, 480
 		jc reqEndY
 		mov dx, offset ErrorMsg
-		jmp reqStartX
+		jmp reqStartY
 
 	reqEndY:
 		mov ah, 9
@@ -300,6 +304,10 @@ getValues endp
 	Finish:
 		mov ah, 8
 		int 21h
+		cmp al, ' '
+		jnz EndProg
+		jmp startDraw
+	EndProg:
 		int 3
 cseg ends
 end Begin
