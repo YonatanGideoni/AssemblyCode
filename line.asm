@@ -23,7 +23,6 @@ dseg segment
 	db "             | |   ) || (\ (   | (   ) || || || || (      | (\ (   ",10,13 
 	db "             | (__/  )| ) \ \__| )   ( || () () || (____/\| ) \ \__",10,13 
 	db "             (______/ |/   \__/|/     \|(_______)(_______/|/   \__/$"
-
 	openingSentence db "Press any key to begin drawing!$"
 	startX dw ?
 	endX dw ?
