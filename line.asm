@@ -23,6 +23,7 @@ dseg segment
 	db "             | |   ) || (\ (   | (   ) || || || || (      | (\ (   ",10,13 
 	db "             | (__/  )| ) \ \__| )   ( || () () || (____/\| ) \ \__",10,13 
 	db "             (______/ |/   \__/|/     \|(_______)(_______/|/   \__/$"
+
 	openingSentence db "Press any key to begin drawing!$"
 	startX dw ?
 	endX dw ?
@@ -292,6 +293,8 @@ clearScreen endp
 		sub bx, lineError
 		mov lineError, bx
 	cont1:
+		add di, di
+		add si, si
 		mov bh, 0
 		mov bl, lineColor
 		cmp di, si
@@ -304,6 +307,8 @@ clearScreen endp
 		sub bx, lineError
 		mov lineError, bx
 	cont2:
+		add di, di
+		add si, si
 		mov bh, 0
 		mov bl, lineColor
 		cmp di, si
@@ -315,12 +320,10 @@ clearScreen endp
 		jc decY_Oct1
 		inc cx
 		add lineError, di
-		add lineError, di
 		jmp drawLine_Oct1
 	decY_Oct1:
 		dec dx
 		int 10h		
-		sub lineError, si
 		sub lineError, si
 		cmp dx, endY
 		jz Finish
@@ -331,12 +334,10 @@ clearScreen endp
 		jc incX_Oct2
 		dec dx
 		add lineError, si
-		add lineError, si
 		jmp drawLine_Oct2
 	incX_Oct2:
 		inc cx
 		int 10h
-		sub lineError, di
 		sub lineError, di
 		cmp cx, endX
 		jz Finish
@@ -347,12 +348,10 @@ clearScreen endp
 		jc incX_Oct3
 		inc dx						;inc y coordinate
 		add lineError, si
-		add lineError, si
 		jmp drawLine_Oct3
 	incX_Oct3:
 		inc cx
 		int 10h
-		sub lineError, di
 		sub lineError, di
 		cmp cx, endX			;check if end of line
 		jz Finish
@@ -363,12 +362,10 @@ clearScreen endp
 		jc incY_Oct4
 		inc cx
 		add lineError, di
-		add lineError, di
 		jmp drawLine_Oct4
 	incY_Oct4:
 		inc dx
 		int 10h		
-		sub lineError, si
 		sub lineError, si
 		cmp dx, endY
 		jz Finish
