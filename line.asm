@@ -5,6 +5,26 @@ dseg segment
 	endYSentence db "Please enter the line's ending Y coordinate. Press Space when done.$"
 	ErrorMsg db "The coordinate you have entered is out of range, please enter a smaller number.$"
 	verticalError db "Please enter a different ending X coordinate, the line cannot be vertical.$"
+	openingScreen db "" 
+	db "                       _       _________ _        _______",10,13
+	db "                      ( \      \__   __/( (    /|(  ____ \",10,13
+	db "                      | (         ) (   |  \  ( || (    \/",10,13 
+	db "                      | |         | |   |   \ | || (__    ",10,13 
+	db "                      | |         | |   | (\ \) ||  __)   ",10,13 
+	db "                      | |         | |   | | \   || (      ",10,13 
+	db "                      | (____/\___) (___| )  \  || (____/\",10,13
+	db "                      (_______/\_______/|/    )_)(_______/",10,13 
+	db "                                                          ",10,13 
+	db "              ______   _______  _______           _______  _______ ",10,13 
+	db "             (  __  \ (  ____ )(  ___  )|\     /|(  ____ \(  ____ )",10,13 
+	db "             | (  \  )| (    )|| (   ) || )   ( || (    \/| (    )|",10,13 
+	db "             | |   ) || (____)|| (___) || | _ | || (__    | (____)|",10,13 
+	db "             | |   | ||     __)|  ___  || |( )| ||  __)   |     __)",10,13 
+	db "             | |   ) || (\ (   | (   ) || || || || (      | (\ (   ",10,13 
+	db "             | (__/  )| ) \ \__| )   ( || () () || (____/\| ) \ \__",10,13 
+	db "             (______/ |/   \__/|/     \|(_______)(_______/|/   \__/$"
+
+	openingSentence db "Press any key to begin drawing!$"
 	startX dw ?
 	endX dw ?
 	startY dw ?
@@ -59,21 +79,63 @@ getValues proc
 		ret 2
 getValues endp
 
+clearScreen proc
+	push ax cx dx
+
+	mov ah, 2
+	mov dl, 0
+	mov dh, 25
+	int 10h
+
+	mov cx, 25	
+	mov dl, 10
+
+	clearLoop:
+		int 21h
+		loop clearLoop
+
+	mov dl, 0
+	mov dh, 0
+	int 10h
+	
+	pop dx cx ax
+	ret
+clearScreen endp
+
 	Begin:
 		mov ax, dseg
 		mov ds, ax
-		mov cx, 25
-		mov ah, 2
-		mov dl, 10
 
-		ClearScreen:
-			int 21h
-			loop ClearScreen
-
-		mov dl, 0
-		mov dh, 0
+	startDraw:
+		mov ax, 3	;switch to text mode, for when drawing extra lines
 		int 10h
 		
+		call clearScreen
+
+	titleScreen:
+		mov ah, 9
+		mov dx, offset openingScreen
+		int 21h
+
+		mov ah, 2
+		mov bh, 0
+		mov dh, 20
+		mov dl, 22
+		int 10h
+
+		mov ah, 9
+		mov dx, offset openingSentence
+		int 21h
+
+		mov ah, 2
+		mov dh, 100
+		int 10h
+
+		mov ah, 8
+		int 21h
+
+		call clearScreen
+
 		mov dx, offset startXSentence
 	
 	reqStartX:
@@ -93,34 +155,11 @@ getValues endp
 		int 21h
 		pop ax
 		mov startX, ax
-		mov dx, offset endXSentence
-		cmp ax, 640
-		jc reqEndX
-		mov dx, offset ErrorMsg
-		jmp reqStartX
-
-	reqEndX:
-		mov ah, 9
-		int 21h
-		mov dl, 10
-		mov ah, 2
-		int 21h
-		mov dl, 13
-		int 21h
-		push 0
-		call getValues
-		mov dl, 10
-		mov ah, 2
-		int 21h
-		mov dl, 13
-		int 21h
-		pop ax
-		mov endX, ax
 		mov dx, offset startYSentence
 		cmp ax, 640
 		jc reqStartY
 		mov dx, offset ErrorMsg
-		jmp reqEndX
+		jmp reqStartX
 
 	reqStartY:
 		mov ah, 9
@@ -139,11 +178,34 @@ getValues endp
 		int 21h
 		pop ax
 		mov startY, ax
-		mov dx, offset endYSentence
+		mov dx, offset endXSentence
 		cmp ax, 480
+		jc reqEndX
+		mov dx, offset ErrorMsg
+		jmp reqStartY
+
+	reqEndX:
+		mov ah, 9
+		int 21h
+		mov dl, 10
+		mov ah, 2
+		int 21h
+		mov dl, 13
+		int 21h
+		push 0
+		call getValues
+		mov dl, 10
+		mov ah, 2
+		int 21h
+		mov dl, 13
+		int 21h
+		pop ax
+		mov endX, ax
+		mov dx, offset endYSentence
+		cmp ax, 640
 		jc reqEndY
 		mov dx, offset ErrorMsg
-		jmp reqStartX
+		jmp reqEndX
 
 	reqEndY:
 		mov ah, 9
@@ -163,9 +225,25 @@ getValues endp
 		pop ax
 		mov endY, ax
 		cmp ax, 480
-		jc startLine
+		jc dotCheck
 		mov dx, offset ErrorMsg
 		jmp reqEndY
+
+	dotCheck:
+		mov cx, endX
+		cmp cx, startX
+		jnz startLine
+		mov cx, startY
+		cmp cx, endY
+		jnz startLine
+		mov ax, 12h	;switch to video mode
+		int 10h
+		mov ah, 0ch
+		mov al, lineColor
+		mov cx, startX
+		mov dx, startY
+		int 10h			;draw dot
+		jmp Finish
 
 	startLine:
 		mov cx, endX
@@ -180,7 +258,7 @@ getValues endp
 		mov endY, ax
 
 	noSwitchCoord:
-		mov ax, 12h
+		mov ax, 12h	;switch to video mode
 		int 10h
 		mov ax, endY
 		mov deltaY, ax
@@ -300,6 +378,10 @@ getValues endp
 	Finish:
 		mov ah, 8
 		int 21h
+		cmp al, ' '
+		jnz EndProg
+		jmp startDraw
+	EndProg:
 		int 3
 cseg ends
 end Begin
