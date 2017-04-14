@@ -4,7 +4,6 @@ dseg segment
 	startYSentence db "Please enter the line's starting Y coordinate. Press Space when done.$"
 	endYSentence db "Please enter the line's ending Y coordinate. Press Space when done.$"
 	ErrorMsg db "The coordinate you have entered is out of range, please enter a smaller number.$"
-	verticalError db "Please enter a different ending X coordinate, the line cannot be vertical.$"
 	openingScreen db "" 
 	db "                       _       _________ _        _______",10,13
 	db "                      ( \      \__   __/( (    /|(  ____ \",10,13
@@ -33,6 +32,8 @@ dseg segment
 	deltaY dw ?
 	lineError dw ?
 	lineColor db 15
+	windowLength = 640
+	windowHeight = 480
 dseg ends
 
 cseg segment
@@ -156,7 +157,7 @@ clearScreen endp
 		pop ax
 		mov startX, ax
 		mov dx, offset startYSentence
-		cmp ax, 640
+		cmp ax, windowLength
 		jc reqStartY
 		mov dx, offset ErrorMsg
 		jmp reqStartX
@@ -179,7 +180,7 @@ clearScreen endp
 		pop ax
 		mov startY, ax
 		mov dx, offset endXSentence
-		cmp ax, 480
+		cmp ax, windowHeight
 		jc reqEndX
 		mov dx, offset ErrorMsg
 		jmp reqStartY
@@ -202,7 +203,7 @@ clearScreen endp
 		pop ax
 		mov endX, ax
 		mov dx, offset endYSentence
-		cmp ax, 640
+		cmp ax, windowLength
 		jc reqEndY
 		mov dx, offset ErrorMsg
 		jmp reqEndX
@@ -224,7 +225,7 @@ clearScreen endp
 		int 21h
 		pop ax
 		mov endY, ax
-		cmp ax, 480
+		cmp ax, windowHeight
 		jc dotCheck
 		mov dx, offset ErrorMsg
 		jmp reqEndY
@@ -258,7 +259,7 @@ clearScreen endp
 		mov endY, ax
 
 	noSwitchCoord:
-		mov ax, 12h	;switch to video mode
+		mov ax, 12h		;switch to video mode
 		int 10h
 		mov ax, endY
 		mov deltaY, ax
