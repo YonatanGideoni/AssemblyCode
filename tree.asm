@@ -195,8 +195,8 @@ printTree proc
 		mov ax, ss:[bp+18]
 		mov cx, ss:[bp+20]
 		
-		add ax, 30
-		sub cx, 30
+		add ax, 60
+		sub cx, 25
 
 		push cx
 		push ax
@@ -219,8 +219,8 @@ printTree proc
 		mov ax, ss:[bp+18]
 		mov cx, ss:[bp+20]
 		
-		add ax, 30
-		add cx, 30
+		add ax, 60
+		add cx, 25
 
 		push cx
 		push ax
@@ -247,15 +247,15 @@ printTree endP
 		mov ax, 12h	;switch to graphics mode
 		int 10h
 
-		mov ax, 10
+		mov ax, 320
 		push ax
-		mov ax, 10
+		mov ax, 15
+		push ax
+		mov ax, 320
 		push ax
 		mov ax, 1
 		push ax
-		mov ax, 1
-		push ax
-		mov ax, offset t15
+		mov ax, offset t1
 		push ax
 
 		call printTree
