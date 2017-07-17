@@ -156,7 +156,7 @@ drawLine MACRO
 		jmp @@drawLine_Oct4
 	@@incY_Oct4:
 		inc dx
-		int 10h		
+		int 10h
 		sub lineError, si
 		cmp dx, endY
 		jz @@endMacro
@@ -168,27 +168,74 @@ printTree proc
 		push ax bx cx dx bp
 
 		mov bp, sp
-		mov ax, ss:[bp+6]
+		mov ax, ss:[bp+12]	;node
+		mov bx, ss:[bp+14]	;startY
+		mov cx, ss:[bp+16]	;startX
+		
+		mov startY, bx
+		mov startX, cx
 
+		mov bx, ss:[bp+18]	;endY
+		mov cx, ss:[bp+20]	;endX
 
-		mov lineColor, ax.Info
+		mov endY, bx
+		mov endX, cx
+
+		mov al, ss:[bp+12].Info
+		mov lineColor, al
 		
 		drawLine
-
-		mov bx, ax.Left
+		
+		mov bx, ss:[bp+12]
+		mov bx, ds:[bx].Left
 		cmp bx, null
 		jz @@checkRightBranch
 		
+		mov ax, ss:[bp+18]
+		mov cx, ss:[bp+20]
 		
+		add ax, 30
+		sub cx, 30
+
+		push cx
+		push ax
+
+		mov ax, ss:[bp+18]
+		mov cx, ss:[bp+20]
+
+		push cx
+		push ax
+
 		push bx
-		printTree
+		call printTree
 
 	@@checkRightBranch:
-		mov bx, ax.Right
+		mov bx, ss:[bp+12]
+		mov bx, ds:[bx].Right
+		cmp bx, null
+		jz @@endFunc
 
+		mov ax, ss:[bp+18]
+		mov cx, ss:[bp+20]
+		
+		add ax, 30
+		add cx, 30
 
+		push cx
+		push ax
+
+		mov ax, ss:[bp+18]
+		mov cx, ss:[bp+20]
+
+		push cx
+		push ax
+
+		push bx
+		call printTree
+
+	@@endFunc:
 		pop bp dx cx bx ax
-		ret 4
+		ret 14
 printTree endP
 
 	Begin:
@@ -199,6 +246,18 @@ printTree endP
 		mov ax, 12h	;switch to graphics mode
 		int 10h
 
+		mov ax, 10
+		push ax
+		mov ax, 10
+		push ax
+		mov ax, 1
+		push ax
+		mov ax, 1
+		push ax
+		mov ax, offset t15
+		push ax
+
+		call printTree
 	Finish:
 		int 3
 cseg ends
