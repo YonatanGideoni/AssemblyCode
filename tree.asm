@@ -181,14 +181,15 @@ printTree proc
 		mov endY, bx
 		mov endX, cx
 
-		mov al, ss:[bp+12].Info
+		mov bx, ss:[bp+12]
+		mov al, ds:[bx].Info
 		mov lineColor, al
 		
 		drawLine
 		
 		mov bx, ss:[bp+12]
 		mov bx, ds:[bx].Left
-		cmp bx, null
+		cmp bx, offset null
 		jz @@checkRightBranch
 		
 		mov ax, ss:[bp+18]
@@ -212,7 +213,7 @@ printTree proc
 	@@checkRightBranch:
 		mov bx, ss:[bp+12]
 		mov bx, ds:[bx].Right
-		cmp bx, null
+		cmp bx, offset null
 		jz @@endFunc
 
 		mov ax, ss:[bp+18]
@@ -235,7 +236,7 @@ printTree proc
 
 	@@endFunc:
 		pop bp dx cx bx ax
-		ret 14
+		ret 10
 printTree endP
 
 	Begin:
