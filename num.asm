@@ -1,29 +1,51 @@
 dseg segment
-	firstNum dw 01000h
-	secondNum dw 02000h
+	firstNum dw 0fffh
+	secondNum dw 099h
 	addition dw ?
 	subtraction dw ?
-	multiplication dw ?
-	division dw ?
+	tempNum dw ?
 
 	firstNumMsg db "The first number is:$"
 	secondNumMsg db "The second number is:$"
 	addMsg db "The addition of these numbers is:$"
 	subMsg db "The subtraction of these numbers is:$"
+	mulMsg db "The multiplication of these numbers is:$"
 dseg ends
 
 printWord MACRO number
 	local @@isPos
 	local @@endMacro
-	shl number, 1
-	jnc @@isPos
+	cmp number, 0
+	jnl @@isPos
 	mov ah, 2
 	mov dl, '-'
 	int 21h
 	neg number
 
 	@@isPos:
-	shr number, 1
+	mov cx, number		;;firstDigit
+	mov dl, ch
+	shr dl, 4
+	printByte dl
+
+	mov dl, ch
+	and dl, 0fh		;;secondDigit
+	printByte dl
+
+	mov dl, cl
+	shr dl, 4			;;thirdDigit
+	printByte dl
+
+	mov dl, cl
+	and dl, 0fh		;;fourthDigit
+	printByte dl	
+	@@endMacro:
+ENDM
+
+uprintWord MACRO number
+	local @@endMacro
+	mov ah, 2
+
 	mov cx, number		;;firstDigit
 	mov dl, ch
 	shr dl, 4
@@ -153,6 +175,37 @@ dropLine endP
 
 		mov di, subtraction
 		printWord di
+
+		call dropLine
+
+		mov ah, 9
+		mov dx, offset mulMsg
+		int 21h
+
+		call dropLine
+
+		mov ax, firstNum
+		mov bx, secondNum
+		imul bx
+
+		mov di, dx
+		mov tempNum, ax
+		cmp dx, 0
+		jnl startPrint
+		neg ax
+		neg dx
+		dec dx
+		mov di, dx
+		mov tempNum, ax
+		mov ah, 2
+		mov dl, '-'
+		int 21h
+
+
+	startPrint:
+		printWord di	;print first part of 32 bit result
+		mov di, tempNum
+		uprintWord di	;print second part
 
 		call dropLine
 
