@@ -1,6 +1,20 @@
-locals
+dseg segment
+	firstNum dw 01000h
+	secondNum dw 02000h
+	addition dw ?
+	subtraction dw ?
+	multiplication dw ?
+	division dw ?
+
+	firstNumMsg db "The first number is:$"
+	secondNumMsg db "The second number is:$"
+	addMsg db "The addition of these numbers is:$"
+	subMsg db "The subtraction of these numbers is:$"
+dseg ends
 
 printWord MACRO number
+	local @@isPos
+	local @@endMacro
 	shl number, 1
 	jnc @@isPos
 	mov ah, 2
@@ -48,15 +62,6 @@ printByte MACRO byte
 	int 21h
 ENDM
 
-dseg segment
-	firstNum dw ?
-	secondNum dw ?
-	addition dw ?
-	subtraction dw ?
-	multiplication dw ?
-	division dw ?
-dseg ends
-
 cseg segment
 assume cs:cseg, ds:dseg
 
@@ -97,7 +102,60 @@ dropLine endP
 
 		call clearScreen
 
-	
+		mov ah, 9
+		mov dx, offset firstNumMsg
+		int 21h
+
+		call dropLine
+		
+		mov di, firstNum
+		printWord di
+
+		call dropLine
+
+		mov ah, 9
+		mov dx, offset secondNumMsg
+		int 21h
+		
+		call dropLine
+
+		mov di, secondNum
+		printWord di
+
+		call dropLine
+
+		mov di, firstNum
+		add di, secondNum
+
+		mov addition, di
+
+		mov di, firstNum
+		sub di, secondNum
+
+		mov subtraction, di
+
+		mov ah, 9
+		mov dx, offset addMsg
+		int 21h
+		
+		call dropLine
+
+		mov di, addition
+		printWord di
+
+		call dropLine
+
+		mov ah, 9
+		mov dx, offset subMsg
+		int 21h
+
+		call dropLine
+
+		mov di, subtraction
+		printWord di
+
+		call dropLine
+
 	Finish:
 		mov ah, 8
 		int 21h
