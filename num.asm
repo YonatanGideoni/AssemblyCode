@@ -16,7 +16,7 @@ printWord MACRO number
 	printByte dl
 
 	mov dl, ch
-	and dl, 0f0h		;;secondDigit
+	and dl, 0fh		;;secondDigit
 	printByte dl
 
 	mov dl, cl
@@ -24,18 +24,20 @@ printWord MACRO number
 	printByte dl
 
 	mov dl, cl
-	and dl, 0f0h		;;fourthDigit
+	and dl, 0fh		;;fourthDigit
 	printByte dl	
 	@@endMacro:
 ENDM
 
 
 printByte MACRO byte
+	local @@printByte
+	local @@isDigit
 	mov dl, byte
 
 	cmp dl, 0ah
 	jb @@isDigit
-	add dl, 54			;;is letter
+	add dl, 55			;;is letter
 	jmp @@printByte
 
 	@@isDigit:
@@ -94,12 +96,11 @@ dropLine endP
 		mov ds, ax
 
 		call clearScreen
-		call dropLine
 
-		mov di, 0044h
-		printWord di
 	
 	Finish:
+		mov ah, 8
+		int 21h
 		int 3
 cseg ends
 end Begin
