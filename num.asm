@@ -1,6 +1,6 @@
 dseg segment
-	firstNum dw 0fffh
-	secondNum dw 099h
+	firstNum dw 9h
+	secondNum dw 0fffeh
 	addition dw ?
 	subtraction dw ?
 	tempNum dw ?
@@ -10,6 +10,7 @@ dseg segment
 	addMsg db "The addition of these numbers is:$"
 	subMsg db "The subtraction of these numbers is:$"
 	mulMsg db "The multiplication of these numbers is:$"
+	divMsg db "The division of these numbers is:$"
 dseg ends
 
 printWord MACRO number
@@ -206,6 +207,23 @@ dropLine endP
 		printWord di	;print first part of 32 bit result
 		mov di, tempNum
 		uprintWord di	;print second part
+
+		call dropLine
+
+		mov ah, 9
+		mov dx, offset divMsg
+		int 21h
+
+		call dropLine
+
+		mov ax, firstNum
+		mov bx, secondNum
+		mov dx, 0
+		idiv bx
+
+		mov di, ax
+
+		printWord di
 
 		call dropLine
 
