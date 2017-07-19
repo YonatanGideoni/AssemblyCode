@@ -23,7 +23,7 @@ assume cs:cseg
 		jmp PrintSecond
 		
 
-		PrintSecond:
+	PrintSecond:
 		mov dl, dh
 		shl dl, 4
 		shr dl, 4
