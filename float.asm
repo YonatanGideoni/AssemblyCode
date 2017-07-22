@@ -6,14 +6,64 @@ float struc
 float ends
 
 dseg segment
-	firstFloat float <3+127,01110000b,0000000000000000b/2>	;9.5
-	secondFloat float <2+127,10000000b,0000000000000000b>	;-4
+	;;variables
+	firstFloat float <3+127,00011000b,0000000000000000b/2>	;9.5
+	secondFloat float <2+127,10000000b,0000000000000000b/2>	;-4
 	
+	oneFloat float <0+127,0,0>	;1
+	
+	helperArr db (256+24)/8 dup(?)
+	helperArrLEN = $-helperArr
+	
+	additionFloat float <?,?,?>
+	
+	;;misc. constants
 	negThreshold = 10000000b
+	
+	;;text messages
+	firstFloatMsg db "This is the first float:$"
+	secondFloatMsg db "This is the second float:$"
+	additionMsg db "This is the result of their addition:$"
 dseg ends
 
 cseg segment
 assume cs:cseg, ds:dseg
+
+addFloat MACRO float1Offset, float2Offset
+	
+ENDM
+
+findBiggestFloat proc
+	push ax bx cx bp
+	mov bp, sp
+	mov ax, ss:[bp+12]
+	mov bx, ss:[bp+14]
+	
+	cmp ax.mantissa1, negThreshold
+	ja firstIsNeg
+	cmp bx.mantissa1, negThreshold
+	jb bothSameSign
+	mov cx, 0		;if first is pos and second is neg, then first>second
+	jmp endFunc
+	
+firstIsNeg:
+	cmp bx.mantissa1, negThreshold
+	ja bothSameSign
+	mov cx, 1	;if first is neg and second is pos then second>first
+	jmp endFunc
+	
+bothSameSign:
+	cmp ax.exponent, bx.exponent
+	je bothSameExponent
+	
+	
+bothSameExponent:
+	
+endFunc:
+	mov ss:[bp+14], cx
+	pop bp cx bx ax
+	ret 2
+endp findBiggestFloat
 
 uprintWord MACRO number
 	local @@endMacro
@@ -58,6 +108,9 @@ printNibble MACRO byte
 ENDM
 
 printFloat MACRO floatOffset
+		local @@isPos
+		local @@isPosExp
+		
 		mov ch, ds:[floatOffset].mantissa1
 		mov si, ds:[floatOffset].mantissa2
 		
@@ -156,8 +209,33 @@ dropLine endP
 		
 		mov di, offset firstFloat
 		
+		mov ah, 9
+		mov dx, offset firstFloatMsg
+		int 21h
+		
+		call dropLine
+		
 		printFloat di
-	
+		
+		call dropLine
+		
+		mov di, offset secondFloat
+		
+		mov ah, 9
+		mov dx, offset secondFloatMsg
+		int 21h
+		
+		call dropLine
+		
+		printFloat di
+		
+		call dropLine
+		
+		mov ah, 9
+		mov dx, offset additionMsg
+		int 21h
+		
+		call dropLine
 	Finish:
 		int 3
 cseg ends
