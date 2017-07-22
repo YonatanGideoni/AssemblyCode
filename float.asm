@@ -14,6 +14,7 @@ dseg segment
 	
 	helperArr db (256+24)/8 dup(?)
 	helperArrLEN = $-helperArr
+	shiftNum db ?
 	
 	additionFloat float <?,?,?>
 	
@@ -30,13 +31,85 @@ cseg segment
 assume cs:cseg, ds:dseg
 
 addFloat MACRO float1Offset, float2Offset
+	local @@firstIsBigger
+	local @@firstIsNeg
+	local @@startAdd
+	local @@checkCond
+	
 	mov bx, float1Offset
 	mov si, float2Offset
 	push bx si
 	call findBiggestFloat
 	pop cx
+	cmp cx, 0
+	je @@firstIsBigger
+	mov al, ds:[float2Offset].mantissa2
+	rcl al, 1
+	sign = cf
+	jmp @@checkCond
+	
+@@firstIsBigger:
+	mov al, ds:[float1Offset].mantissa1
+	rcl al, 1
+	sign = cf
+
+@@checkCond:
+	mov al, ds:[float1Offset].mantissa1
+	rcl al, 1
+	jnc @@firstIsPos
+	jmp @@firstIsNeg
 	
 	
+@@firstIsPos:
+	mov bl, ds:[float2Offset].mantissa1
+	rcl bl, 1
+	jc @@secondIsNeg
+	
+	cmp sign,0
+	je @@condIsAdd	;;if end-sign is positive and both are positive, then addition is needed between them
+	cond=sub
+	jmp @@startAdd
+	
+@@firstIsNeg:
+
+
+@@secondIsNeg:
+	
+@@condIsAdd:
+	cond=add
+	
+@@startAdd:
+	mov bl, ds:[float1Offset].exponent
+	rcr al, 1
+	or al, negThreshold		;;add implicit 1
+	mov ch, al
+	mov ah, 0
+	mov al, bl
+	mov bl, helperArrLEN
+	div bl
+	mov bl, al	;;spot in array
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, ch
+	mov bh, 0
+	mov al, helperArr[bx]
+	mov ax, ds:[float1Offset].mantissa2
+	mov ah, helperArr[bx+1]
+	mov al, helperArr[bx+2]
+	shiftInArr bx
+ENDM
+
+shiftInArr MACRO arrPos
+	local @@shiftLoop
+	mov cx, shiftNum
+	clc
+	
+@@shiftLoop:
+	rcl helperArr[arrPos+2],1
+	rcl helperArr[arrPos+1],1
+	rcl helperArr[arrPos],1
+	rcl helperArr[arrPos-1],1
+	clc
+	loop @@shiftLoop
 ENDM
 
 findBiggestFloat proc
