@@ -39,6 +39,11 @@ addFloat MACRO float1Offset, float2Offset
 	local @@firstIsNeg
 	local @@startAdd
 	local @@checkCond
+	local @@sub1From2
+	local @@sub2From1
+	local @@contAddMantissa
+	local @@condIsAdd
+	local @@firstIsPos
 	
 	mov sign,0
 	mov cond,0
@@ -99,10 +104,10 @@ addFloat MACRO float1Offset, float2Offset
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
-	mov al, helperArr[bx]
+	mov helperArr[bx], al
 	mov ax, ds:[float1Offset].mantissa2
-	mov ah, helperArr[bx+1]
-	mov al, helperArr[bx+2]
+	mov helperArr[bx+1], ah
+	mov helperArr[bx+2], al
 	shiftInArr bx, helperArr
 	
 	mov bl, ds:[float2Offset].exponent
@@ -117,10 +122,10 @@ addFloat MACRO float1Offset, float2Offset
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
-	mov al, helperArr2[bx]
+	mov helperArr2[bx], al
 	mov ax, ds:[float2Offset].mantissa2
-	mov ah, helperArr2[bx+1]
-	mov al, helperArr2[bx+2]
+	mov helperArr2[bx+1], ah
+	mov helperArr2[bx+2], al
 	shiftInArr bx, helperArr2
 
 	mov ax,0
@@ -192,7 +197,12 @@ addFloat MACRO float1Offset, float2Offset
 	mov bh, 0
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, 1
-	shl al, shiftNum-1
+	mov dl, shiftNum-1
+
+@@contShiftExp:
+	shl al,1
+	dec dl
+	jnz @@contShiftExp
 	inc bx
 	cmp al, helperArr[bx]
 	jb @@lowerExponent		;;normalize exponent
