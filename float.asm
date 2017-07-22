@@ -14,7 +14,11 @@ dseg segment
 	
 	helperArr db (256+24)/8 dup(?)
 	helperArrLEN = $-helperArr
+	helperArr2 db (256+24)/8 dup(?)
 	shiftNum db ?
+	sign db 0
+	cond db 0
+	isBigger dw 0
 	
 	additionFloat float <?,?,?>
 	
@@ -36,22 +40,27 @@ addFloat MACRO float1Offset, float2Offset
 	local @@startAdd
 	local @@checkCond
 	
+	mov sign,0
+	mov cond,0
+	mov isBigger,0
+	
 	mov bx, float1Offset
 	mov si, float2Offset
 	push bx si
 	call findBiggestFloat
 	pop cx
+	mov isBigger, cx
 	cmp cx, 0
 	je @@firstIsBigger
-	mov al, ds:[float2Offset].mantissa2
+	mov al, ds:[float2Offset].mantissa1	;;because second is smaller, checks if it's pos or neg
 	rcl al, 1
-	sign = cf
+	adc sign,0
 	jmp @@checkCond
 	
 @@firstIsBigger:
 	mov al, ds:[float1Offset].mantissa1
 	rcl al, 1
-	sign = cf
+	adc sign,0
 
 @@checkCond:
 	mov al, ds:[float1Offset].mantissa1
@@ -63,24 +72,23 @@ addFloat MACRO float1Offset, float2Offset
 @@firstIsPos:
 	mov bl, ds:[float2Offset].mantissa1
 	rcl bl, 1
-	jc @@secondIsNeg
-	
-	cmp sign,0
-	je @@condIsAdd	;;if end-sign is positive and both are positive, then addition is needed between them
-	cond=sub
+	jnc @@condIsAdd
+	mov cond,1
 	jmp @@startAdd
 	
 @@firstIsNeg:
-
-
-@@secondIsNeg:
+	mov bl, ds:[float2Offset].mantissa1
+	rcl bl, 1
+	jc @@condIsAdd
+	mov cond,1
+	jmp @@startAdd
 	
 @@condIsAdd:
-	cond=add
+	mov cond,0
 	
 @@startAdd:
 	mov bl, ds:[float1Offset].exponent
-	rcr al, 1
+	mov al, ds:[float1Offset].mantissa1
 	or al, negThreshold		;;add implicit 1
 	mov ch, al
 	mov ah, 0
@@ -95,19 +103,173 @@ addFloat MACRO float1Offset, float2Offset
 	mov ax, ds:[float1Offset].mantissa2
 	mov ah, helperArr[bx+1]
 	mov al, helperArr[bx+2]
-	shiftInArr bx
+	shiftInArr bx, helperArr
+	
+	mov bl, ds:[float2Offset].exponent
+	mov al, ds:[float2Offset].mantissa1
+	or al, negThreshold		;;add implicit 1
+	mov ch, al
+	mov ah, 0
+	mov al, bl
+	mov bl, helperArrLEN
+	div bl
+	mov bl, al	;;spot in array
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, ch
+	mov bh, 0
+	mov al, helperArr2[bx]
+	mov ax, ds:[float2Offset].mantissa2
+	mov ah, helperArr2[bx+1]
+	mov al, helperArr2[bx+2]
+	shiftInArr bx, helperArr2
+
+	mov ax,0
+	mov dx,0
+	mov cx,0
+	mov bx, helperArrLEN-1
+	cmp cond, 0
+	je @@addArrays
+	mov ah, 1
+	cmp isBigger, 0
+	je @@sub2From1
+	jmp @@sub1From2
+	
+@@sub2From1:
+	mov dl, helperArr[bx]
+	add cl, helperArr2[bx]
+	add ax, dx
+	sub ax, cx
+	mov helperArr[bx], al
+	not ah
+	and ah, 1
+	mov cl, ah
+	mov ah, 1
+	mov al, 0
+	dec bx
+	jnz @@sub2From1
+	jmp @@convertToFloat
+
+@@sub1From2:
+	mov dl, helperArr2[bx]
+	add cl, helperArr[bx]
+	add ax, dx
+	sub ax, cx
+	mov helperArr[bx], al
+	not ah
+	and ah, 1
+	mov cl, ah
+	mov ah, 1
+	mov al, 0
+	dec bx
+	jnz @@sub2From1
+	jmp @@convertToFloat
+
+@@addArrays:
+	mov dl, helperArr[bx]
+	mov cl, helperArr2[bx]
+	add ax, dx
+	add ax, cx
+	mov helperArr[bx], al
+	mov al,0
+	xchg al, ah
+	dec bx
+	jnz @@addArrays
+	jmp @@convertToFloat
+	
+@@convertToFloat:
+	mov al, ds:[float1Offset].exponent
+	mov ah, ds:[float2Offset].exponent
+	cmp al, ah
+	ja @@firstIsBiggerExponent
+	mov al, ah
+	
+@@firstIsBiggerExponent:
+	mov ch, al
+	mov bl, helperArrLEN
+	mov ah, 0
+	div bl
+	mov bl, al	;;spot in array
+	mov bh, 0
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, 1
+	shl al, shiftNum-1
+	inc bx
+	cmp al, helperArr[bx]
+	jb @@lowerExponent		;;normalize exponent
+	shl al, 1
+	cmp al, 0
+	jne @@contExponentCheck
+	mov al,1
+	inc bx
+	
+@@contExponentCheck:
+	cmp al, helperArr[bx]
+	jae @@increaseExponent
+	jmp @@addExponent
+	
+@@increaseExponent:
+	inc ch
+	jmp @@addExponent
+	
+@@lowerExponent:
+	dec ch
+
+@@addExponent:
+	mov additionFloat.exponent, ch
+	jmp @@addMantissa
+	
+@@addMantissa:
+	alignArrBits helperArr
+	mov al, helperArr[bx]
+	cmp sign, 0
+	je @@additionIsPos	;;turn result neg or pos
+	or al, negThreshold
+	jmp @@contAddMantissa
+	
+@@additionIsPos:
+	and al, 7fh
+@@contAddMantissa:
+	mov additionFloat.mantissa1, al
+	
+	mov ah, helperArr[bx-1]
+	mov al, helperArr[bx-2]
+	mov additionFloat.mantissa2, ax
 ENDM
 
-shiftInArr MACRO arrPos
+alignArrBits MACRO arr
+	local @@startAligning
+	local @@findBits
+	mov bx, 0
+	
+@@findBits:
+	cmp &arr[bx],0
+	jne @@startAligning
+	inc bx
+	jmp @@findBits
+	
+@@startAligning:
+	clc
+	rcl &arr[bx-4],1
+	rcl &arr[bx-3],1
+	rcl &arr[bx-2],1
+	rcl &arr[bx-1],1
+	rcl &arr[bx],1
+	cmp &arr[bx], negThreshold
+	jb @@startAligning
+ENDM
+
+shiftInArr MACRO arrPos, arr
 	local @@shiftLoop
-	mov cx, shiftNum
+	mov cl, shiftNum
+	mov ch,0
 	clc
 	
 @@shiftLoop:
-	rcl helperArr[arrPos+2],1
-	rcl helperArr[arrPos+1],1
-	rcl helperArr[arrPos],1
-	rcl helperArr[arrPos-1],1
+	rcl &arr[arrPos+2],1
+	rcl &arr[arrPos+1],1
+	rcl &arr[arrPos],1
+	rcl &arr[arrPos-1],1
+	rcl &arr[arrPos-2],1
 	clc
 	loop @@shiftLoop
 ENDM
@@ -323,11 +485,14 @@ dropLine endP
 		mov ax, dseg
 		mov ds, ax
 		
-		mov bx, offset firstFloat
+		mov di, offset firstFloat
 		mov si, offset secondFloat
-		addFloat bx, si
+		addFloat di, si		
 		
 		call clearScreen
+		
+		mov di, offset additionFloat
+		printFloat di
 		
 		mov di, offset firstFloat
 		
