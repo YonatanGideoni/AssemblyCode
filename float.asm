@@ -30,37 +30,82 @@ cseg segment
 assume cs:cseg, ds:dseg
 
 addFloat MACRO float1Offset, float2Offset
+	mov bx, float1Offset
+	mov si, float2Offset
+	push bx si
+	call findBiggestFloat
+	pop cx
+	
 	
 ENDM
 
 findBiggestFloat proc
 	push ax bx cx bp
 	mov bp, sp
-	mov ax, ss:[bp+12]
-	mov bx, ss:[bp+14]
+	mov bx, ss:[bp+12]
+	mov al, ds:[bx].mantissa1
+	mov bx, ss:[bp+10]
+	mov bl, ds:[bx].mantissa1
 	
-	cmp ax.mantissa1, negThreshold
-	ja firstIsNeg
-	cmp bx.mantissa1, negThreshold
-	jb bothSameSign
+	cmp al, negThreshold
+	jae firstIsNeg
+	cmp bl, negThreshold
+	jbe bothSameSign
 	mov cx, 0		;if first is pos and second is neg, then first>second
 	jmp endFunc
 	
 firstIsNeg:
-	cmp bx.mantissa1, negThreshold
-	ja bothSameSign
+	cmp bl, negThreshold
+	jae bothSameSign
 	mov cx, 1	;if first is neg and second is pos then second>first
 	jmp endFunc
 	
 bothSameSign:
-	cmp ax.exponent, bx.exponent
+	mov bx, ss:[bp+12]
+	mov al, ds:[bx].exponent
+	mov bx, ss:[bp+10]
+	mov bl, ds:[bx].exponent
+	cmp al, bl
 	je bothSameExponent
-	
+	ja firstIsBiggerExponent
+	mov cx, 1
+	jmp endFunc
 	
 bothSameExponent:
+	mov bx, ss:[bp+12]
+	mov al, ds:[bx].mantissa1
+	mov bx, ss:[bp+10]
+	mov bl, ds:[bx].mantissa1
+	cmp al,bl
+	je bothSameMantissa1
+	ja firstIsBigger
+	mov cx, 1
+	jmp endFunc
+	
+bothSameMantissa1:
+	mov bx, ss:[bp+12]
+	mov ax, ds:[bx].mantissa2
+	mov bx, ss:[bp+10]
+	mov bx, ds:[bx].mantissa2
+	cmp ax,bx
+	jae firstIsBigger
+	mov cx, 1
+	jmp endFunc
+	
+firstIsBiggerExponent:
+	mov bx, ss:[bp+12]
+	mov al, ds:[bx].mantissa1
+	rcl al, 1
+	jnc firstIsBigger	;if mantissa is positive, first>second
+	
+	mov cx, 1
+	jmp endFunc
+	
+firstIsBigger:
+	mov cx, 0
 	
 endFunc:
-	mov ss:[bp+14], cx
+	mov ss:[bp+12], cx
 	pop bp cx bx ax
 	ret 2
 endp findBiggestFloat
@@ -142,7 +187,7 @@ printFloat MACRO floatOffset
 		
 		and ch, 0fh
 		printNibble ch
-				
+		
 		uprintWord si
 
 		mov cl, ds:[floatOffset].exponent
@@ -205,6 +250,10 @@ dropLine endP
 		mov ax, dseg
 		mov ds, ax
 		
+		mov bx, offset firstFloat
+		mov si, offset secondFloat
+		addFloat bx, si
+		
 		call clearScreen
 		
 		mov di, offset firstFloat
@@ -236,6 +285,8 @@ dropLine endP
 		int 21h
 		
 		call dropLine
+		
+		
 	Finish:
 		int 3
 cseg ends
