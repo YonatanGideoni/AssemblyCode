@@ -167,6 +167,7 @@ addFloat MACRO float1Offset, float2Offset
 	local @@addArrays
 	local @@contShiftExp
 	local @@contExponentCheck
+	local @@shiftExpCheck
 	
 	mov sign,0
 	mov cond,0
@@ -350,7 +351,18 @@ addFloat MACRO float1Offset, float2Offset
 	
 @@lowerExponent:
 	dec ch
-
+	shr al,1
+	cmp al,0
+	je @@shiftExpCheck
+	cmp al, helperArr[bx]
+	ja @@lowerExponent
+	jmp @@addExponent
+	
+@@shiftExpCheck:
+	inc bx
+	cmp al, helperArr[bx]
+	ja @@lowerExponent
+	
 @@addExponent:
 	mov additionFloat.exponent, ch
 	jmp @@addMantissa
@@ -651,15 +663,7 @@ dropLine endP
 		mov ax, dseg
 		mov ds, ax	
 		
-		call clearScreen	
-		
-
-		mov di, offset firstFloat
-		mov si, offset secondFloat
-		addFloat di, si		
-		
-		mov di, offset additionFloat
-		printFloat di
+		call clearScreen
 		
 		mov di, offset firstFloat
 		
