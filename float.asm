@@ -12,6 +12,7 @@ dseg segment
 	
 	oneFloat float <0+127,0,0>	;1
 	helperFloat float <?,?,?>
+	helperFloat2 float <?,?,?>
 	
 	helperArr db (256+24)/8 dup(?)
 	helperArrLEN = $-helperArr
@@ -22,6 +23,7 @@ dseg segment
 	isBigger dw 0
 	
 	additionFloat float <?,?,?>
+	multiplicationFloat float <?,?,?>
 	
 	;;misc. constants
 	negThreshold = 10000000b
@@ -35,6 +37,93 @@ dseg ends
 
 cseg segment
 assume cs:cseg, ds:dseg
+
+mulFloat MACRO float1Offset, float2Offset
+	local @@resultSignIsNeg
+	local @@startMantissaMul
+	local @@mulFloats
+	local @@contLoop
+	local @@resultIsPos
+	
+	mov sign,0
+	
+	mov al, ds:[float1Offset].mantissa1
+	mov ah, ds:[float2Offset].mantissa1
+	mov bl,0
+	rcl al,1
+	adc bl,0	;;check if numbers have same sign
+	rcl ah,1
+	adc bl,0
+	cmp bl,1
+	je @@resultSignIsNeg
+	mov sign, 0
+	jmp @@startMantissaMul
+	
+@@resultSignIsNeg:
+	mov sign,1
+	
+@@startMantissaMul:
+	mov helperFloat.exponent, 127
+	mov helperFloat2.exponent, 127
+	mov al, ds:[float1Offset].mantissa1
+	or al, negThreshold					;;isolate mantissa's in helper floats
+	mov helperFloat.mantissa1, al
+	mov ax, ds:[float1Offset].mantissa2
+	mov helperFloat.mantissa2, ax
+	mov al, ds:[float2Offset].mantissa1
+	or al, negThreshold
+	mov helperFloat2.mantissa1, al
+	mov ax, ds:[float2Offset].mantissa2
+	mov helperFloat2.mantissa2, ax
+	
+	mov additionFloat.mantissa1,0
+	mov additionFloat.mantissa2,0
+	mov additionFloat.exponent, 127
+	
+	mov cx,24
+	
+@@mulFloats:
+	clc
+	rcr helperFloat.mantissa1,1
+	rcr helperFloat.mantissa2,1
+	jnc @@contLoop
+	
+	mov al, 127+24
+	sub al,cl
+	mov helperFloat2.exponent,al
+	
+	push si di
+	
+	mov si, offset additionFloat
+	mov di, offset helperFloat2
+	
+	addFloat si, di
+	
+	pop di si
+@@contLoop:
+	loop @@mulFloats
+	
+	mov al, ds:[float1Offset].exponent
+	add al, ds:[float2Offset].exponent
+	sub al, 127
+	sub additionFloat.exponent, 127
+	add al, additionFloat.exponent	;;correct exponent if during mantissa multiplication exponent shifted
+	mov mulFloat.exponent, al
+	
+	mov al, additionFloat.mantissa1
+	cmp sign,0
+	je @@resultIsPos
+	or al, negThreshold
+	jmp @@getResult
+	
+@@resultIsPos:
+	and al, 7fh
+	
+@@getResult:
+	mov mulFloat.mantissa1, al
+	mov ax, additionFloat.mantissa2
+	mov mulFloat.mantissa2, ax
+ENDM
 
 addFloat MACRO float1Offset, float2Offset
 	local @@firstIsBigger
