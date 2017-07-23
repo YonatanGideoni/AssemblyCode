@@ -8,7 +8,7 @@ float ends
 dseg segment
 	;;variables
 	firstFloat float <3+127,00011000b,0000000000000000b/2>	;9.5
-	secondFloat float <2+127,10000000b,0000000000000000b/2>	;-4
+	secondFloat float <2+127,11000000b,0000000000000000b/2>	;-6
 	
 	oneFloat float <0+127,0,0>	;1
 	helperFloat float <?,?,?>
@@ -19,6 +19,7 @@ dseg segment
 	helperArr2 db (256+24)/8 dup(?)
 	shiftNum db ?
 	sign db 0
+	mulSign db 0
 	cond db 0
 	isBigger dw 0
 	
@@ -41,11 +42,13 @@ assume cs:cseg, ds:dseg
 mulFloat MACRO float1Offset, float2Offset
 	local @@resultSignIsNeg
 	local @@startMantissaMul
-	local @@mulFloats
+	local @@multiplyFloats
 	local @@contLoop
 	local @@resultIsPos
+	local @@gotoContLoop
+	local @@endLoop
 	
-	mov sign,0
+	mov mulSign,0
 	
 	mov al, ds:[float1Offset].mantissa1
 	mov ah, ds:[float2Offset].mantissa1
@@ -56,11 +59,11 @@ mulFloat MACRO float1Offset, float2Offset
 	adc bl,0
 	cmp bl,1
 	je @@resultSignIsNeg
-	mov sign, 0
+	mov mulSign, 0
 	jmp @@startMantissaMul
 	
 @@resultSignIsNeg:
-	mov sign,1
+	mov mulSign,1
 	
 @@startMantissaMul:
 	mov helperFloat.exponent, 127
@@ -71,7 +74,7 @@ mulFloat MACRO float1Offset, float2Offset
 	mov ax, ds:[float1Offset].mantissa2
 	mov helperFloat.mantissa2, ax
 	mov al, ds:[float2Offset].mantissa1
-	or al, negThreshold
+	and al, 7fh
 	mov helperFloat2.mantissa1, al
 	mov ax, ds:[float2Offset].mantissa2
 	mov helperFloat2.mantissa2, ax
@@ -81,14 +84,20 @@ mulFloat MACRO float1Offset, float2Offset
 	mov additionFloat.exponent, 127
 	
 	mov cx,24
+	jmp @@multiplyFloats
 	
-@@mulFloats:
+@@gotoContLoop:
+	jmp @@contLoop
+	
+@@multiplyFloats:
 	clc
 	rcr helperFloat.mantissa1,1
 	rcr helperFloat.mantissa2,1
-	jnc @@contLoop
+	jnc @@gotoContLoop
 	
-	mov al, 127+24
+	push cx
+	
+	mov al, 127
 	sub al,cl
 	mov helperFloat2.exponent,al
 	
@@ -97,21 +106,33 @@ mulFloat MACRO float1Offset, float2Offset
 	mov si, offset additionFloat
 	mov di, offset helperFloat2
 	
-	addFloat si, di
+	addFloat di, si
 	
 	pop di si
+	
+	pop cx
 @@contLoop:
-	loop @@mulFloats
+	loop @@gotoMultiplyFloats
+	jmp @@endLoop
+	
+@@gotoMultiplyFloats:
+	jmp @@multiplyFloats
+	
+@@endLoop:
+	clc
+	rcl additionFloat.mantissa2,1
+	rcl additionFloat.mantissa1,1
+	
 	
 	mov al, ds:[float1Offset].exponent
 	add al, ds:[float2Offset].exponent
 	sub al, 127
 	sub additionFloat.exponent, 127
 	add al, additionFloat.exponent	;;correct exponent if during mantissa multiplication exponent shifted
-	mov mulFloat.exponent, al
+	mov multiplicationFloat.exponent, al
 	
 	mov al, additionFloat.mantissa1
-	cmp sign,0
+	cmp mulSign,0
 	je @@resultIsPos
 	or al, negThreshold
 	jmp @@getResult
@@ -120,9 +141,9 @@ mulFloat MACRO float1Offset, float2Offset
 	and al, 7fh
 	
 @@getResult:
-	mov mulFloat.mantissa1, al
+	mov multiplicationFloat.mantissa1, al
 	mov ax, additionFloat.mantissa2
-	mov mulFloat.mantissa2, ax
+	mov multiplicationFloat.mantissa2, ax
 ENDM
 
 addFloat MACRO float1Offset, float2Offset
@@ -336,14 +357,16 @@ addFloat MACRO float1Offset, float2Offset
 	
 @@addMantissa:
 	alignArrBits helperArr
+	findFirstBit helperArr
 	mov al, helperArr[bx]
+	shl al,1
+	shr al,1
 	cmp sign, 0
 	je @@additionIsPos	;;turn result neg or pos
 	or al, negThreshold
 	jmp @@contAddMantissa
 	
 @@additionIsPos:
-	and al, 7fh
 @@contAddMantissa:
 	mov additionFloat.mantissa1, al
 	
@@ -355,25 +378,33 @@ addFloat MACRO float1Offset, float2Offset
 	clearArr helperArr2, helperArrLEN
 ENDM
 
-alignArrBits MACRO arr
-	local @@startAligning
+findFirstBit MACRO arr
 	local @@findBits
+	local @@exitMacro
+	
 	mov bx, 0
 	
 @@findBits:
 	cmp &arr[bx],0
-	jne @@startAligning
+	jne @@exitMacro
 	inc bx
 	jmp @@findBits
 	
+@@exitMacro:
+ENDM
+
+alignArrBits MACRO arr
+	local @@startAligning
+	findFirstBit arr
+	
 @@startAligning:
 	clc
-	rcl &arr[bx+4],1
 	rcl &arr[bx+3],1
 	rcl &arr[bx+2],1
 	rcl &arr[bx+1],1
 	rcl &arr[bx],1
-	cmp &arr[bx], negThreshold
+	rcl &arr[bx-1],1
+	cmp &arr[bx-1], negThreshold
 	jb @@startAligning
 ENDM
 
@@ -622,6 +653,14 @@ dropLine endP
 		
 		call clearScreen	
 		
+
+		mov di, offset firstFloat
+		mov si, offset secondFloat
+		addFloat di, si		
+		
+		mov di, offset additionFloat
+		printFloat di
+		
 		mov di, offset firstFloat
 		
 		mov ah, 9
@@ -651,7 +690,7 @@ dropLine endP
 		int 21h
 		
 		call dropLine
-				
+		
 		mov di, offset firstFloat
 		mov si, offset secondFloat
 		addFloat di, si		
@@ -685,6 +724,17 @@ dropLine endP
 		printFloat di
 		
 		call dropLine
+		
+		
+		call dropLine
+		
+		mov di, offset firstFloat
+		mov si, offset secondFloat
+		mulFloat di, si
+		
+		mov di, offset multiplicationFloat
+		printFloat di
+		
 	Finish:
 		int 3
 cseg ends
