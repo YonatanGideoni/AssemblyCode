@@ -44,6 +44,7 @@ addFloat MACRO float1Offset, float2Offset
 	local @@contAddMantissa
 	local @@condIsAdd
 	local @@firstIsPos
+	local @@noShiftExp
 	
 	mov sign,0
 	mov cond,0
@@ -98,7 +99,7 @@ addFloat MACRO float1Offset, float2Offset
 	mov ch, al
 	mov ah, 0
 	mov al, bl
-	mov bl, helperArrLEN
+	mov bl, 8
 	div bl
 	mov bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
@@ -116,7 +117,7 @@ addFloat MACRO float1Offset, float2Offset
 	mov ch, al
 	mov ah, 0
 	mov al, bl
-	mov bl, helperArrLEN
+	mov bl, 8
 	div bl
 	mov bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
@@ -190,22 +191,26 @@ addFloat MACRO float1Offset, float2Offset
 	
 @@firstIsBiggerExponent:
 	mov ch, al
-	mov bl, helperArrLEN
+	mov bl, 8
 	mov ah, 0
 	div bl
 	mov bl, al	;;spot in array
 	mov bh, 0
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, 1
-	mov dl, shiftNum-1
-
+	mov dl, shiftNum
+	dec dl
+	cmp dl, 0
+	jz @@noShiftExp
+	
 @@contShiftExp:
 	shl al,1
 	dec dl
 	jnz @@contShiftExp
-	inc bx
+@@noShiftExp:
+	dec bx
 	cmp al, helperArr[bx]
-	jb @@lowerExponent		;;normalize exponent
+	ja @@lowerExponent		;;normalize exponent
 	shl al, 1
 	cmp al, 0
 	jne @@contExponentCheck
@@ -244,6 +249,9 @@ addFloat MACRO float1Offset, float2Offset
 	mov ah, helperArr[bx-1]
 	mov al, helperArr[bx-2]
 	mov additionFloat.mantissa2, ax
+	
+	clearArr helperArr, helperArrLEN
+	clearArr helperArr2, helperArrLEN
 ENDM
 
 alignArrBits MACRO arr
@@ -259,10 +267,10 @@ alignArrBits MACRO arr
 	
 @@startAligning:
 	clc
-	rcl &arr[bx-4],1
-	rcl &arr[bx-3],1
-	rcl &arr[bx-2],1
-	rcl &arr[bx-1],1
+	rcl &arr[bx+4],1
+	rcl &arr[bx+3],1
+	rcl &arr[bx+2],1
+	rcl &arr[bx+1],1
 	rcl &arr[bx],1
 	cmp &arr[bx], negThreshold
 	jb @@startAligning
@@ -397,6 +405,22 @@ printNibble MACRO byte
 	int 21h
 ENDM
 
+clearArr MACRO arr, arrLEN
+	local @@cleanLoop
+
+	mov bx, arrLEN
+	dec bx
+	mov cx, arrLEN
+	dec cx
+	
+@@cleanLoop:
+	mov &arr[bx],0
+	dec bx
+	loop @@cleanLoop
+	
+	mov &arr[0], 0
+ENDM
+
 printFloat MACRO floatOffset
 		local @@isPos
 		local @@isPosExp
@@ -493,16 +517,9 @@ dropLine endP
 	
 	Begin:
 		mov ax, dseg
-		mov ds, ax
+		mov ds, ax	
 		
-		mov di, offset firstFloat
-		mov si, offset secondFloat
-		addFloat di, si		
-		
-		call clearScreen
-		
-		mov di, offset additionFloat
-		printFloat di
+		call clearScreen	
 		
 		mov di, offset firstFloat
 		
@@ -533,8 +550,16 @@ dropLine endP
 		int 21h
 		
 		call dropLine
+				
+		mov di, offset firstFloat
+		mov si, offset secondFloat
+		addFloat di, si		
 		
 		
+		mov di, offset additionFloat
+		printFloat di
+		
+		call dropLine
 	Finish:
 		int 3
 cseg ends
