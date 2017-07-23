@@ -11,6 +11,7 @@ dseg segment
 	secondFloat float <2+127,10000000b,0000000000000000b/2>	;-4
 	
 	oneFloat float <0+127,0,0>	;1
+	helperFloat float <?,?,?>
 	
 	helperArr db (256+24)/8 dup(?)
 	helperArrLEN = $-helperArr
@@ -29,6 +30,7 @@ dseg segment
 	firstFloatMsg db "This is the first float:$"
 	secondFloatMsg db "This is the second float:$"
 	additionMsg db "This is the result of their addition:$"
+	subtractionMsg db "This is the result of their subtraction:$"
 dseg ends
 
 cseg segment
@@ -45,6 +47,16 @@ addFloat MACRO float1Offset, float2Offset
 	local @@condIsAdd
 	local @@firstIsPos
 	local @@noShiftExp
+	local @@addExponent
+	local @@addMantissa
+	local @@lowerExponent
+	local @@increaseExponent
+	local @@convertToFloat
+	local @@firstIsBiggerExponent
+	local @@additionIsPos
+	local @@addArrays
+	local @@contShiftExp
+	local @@contExponentCheck
 	
 	mov sign,0
 	mov cond,0
@@ -555,6 +567,30 @@ dropLine endP
 		mov si, offset secondFloat
 		addFloat di, si		
 		
+		mov di, offset additionFloat
+		printFloat di
+		
+		call dropLine
+		
+		mov ah, 9
+		mov dx, offset subtractionMsg
+		int 21h
+		
+		call dropLine
+		
+		mov al, secondFloat.exponent
+		mov ah, secondFloat.mantissa1
+		mov bx, secondFloat.mantissa2
+		
+		xor ah, negThreshold		;change last bit to inverse in order to change sign
+		
+		mov helperFloat.exponent, al
+		mov helperFloat.mantissa1, ah
+		mov helperFloat.mantissa2, bx
+		
+		mov di, offset firstFloat
+		mov si, offset helperFloat
+		addFloat di, si		
 		
 		mov di, offset additionFloat
 		printFloat di
