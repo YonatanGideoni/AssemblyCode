@@ -176,7 +176,7 @@ addFloat MACRO float1Offset, float2Offset
 	mov bx, float1Offset
 	mov si, float2Offset
 	push bx si
-	call findBiggestFloat
+	call findBiggestFloatAbs
 	pop cx
 	mov isBigger, cx
 	cmp cx, 0
@@ -436,43 +436,29 @@ shiftInArr MACRO arrPos, arr
 	loop @@shiftLoop
 ENDM
 
-findBiggestFloat proc
+findBiggestFloatAbs proc
 	push ax bx cx bp
 	mov bp, sp
-	mov bx, ss:[bp+12]
-	mov al, ds:[bx].mantissa1
-	mov bx, ss:[bp+10]
-	mov bl, ds:[bx].mantissa1
 	
-	cmp al, negThreshold
-	jae firstIsNeg
-	cmp bl, negThreshold
-	jbe bothSameSign
-	mov cx, 0		;if first is pos and second is neg, then first>second
-	jmp endFunc
-	
-firstIsNeg:
-	cmp bl, negThreshold
-	jae bothSameSign
-	mov cx, 1	;if first is neg and second is pos then second>first
-	jmp endFunc
-	
-bothSameSign:
 	mov bx, ss:[bp+12]
 	mov al, ds:[bx].exponent
 	mov bx, ss:[bp+10]
 	mov bl, ds:[bx].exponent
 	cmp al, bl
 	je bothSameExponent
-	ja firstIsBiggerExponent
+	ja firstIsBigger
 	mov cx, 1
 	jmp endFunc
 	
 bothSameExponent:
 	mov bx, ss:[bp+12]
 	mov al, ds:[bx].mantissa1
+	shl al,1
+	shr al,1
 	mov bx, ss:[bp+10]
 	mov bl, ds:[bx].mantissa1
+	shl bl,1
+	shr bl,1
 	cmp al,bl
 	je bothSameMantissa1
 	ja firstIsBigger
@@ -489,15 +475,6 @@ bothSameMantissa1:
 	mov cx, 1
 	jmp endFunc
 	
-firstIsBiggerExponent:
-	mov bx, ss:[bp+12]
-	mov al, ds:[bx].mantissa1
-	rcl al, 1
-	jnc firstIsBigger	;if mantissa is positive, first>second
-	
-	mov cx, 1
-	jmp endFunc
-	
 firstIsBigger:
 	mov cx, 0
 	
@@ -505,7 +482,7 @@ endFunc:
 	mov ss:[bp+12], cx
 	pop bp cx bx ax
 	ret 2
-endp findBiggestFloat
+endp findBiggestFloatAbs
 
 uprintWord MACRO number
 	local @@endMacro
