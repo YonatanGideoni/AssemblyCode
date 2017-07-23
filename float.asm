@@ -219,7 +219,7 @@ addFloat MACRO float1Offset, float2Offset
 	
 @@contExponentCheck:
 	cmp al, helperArr[bx]
-	jae @@increaseExponent
+	jbe @@increaseExponent
 	jmp @@addExponent
 	
 @@increaseExponent:
