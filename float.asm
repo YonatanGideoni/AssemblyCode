@@ -11,6 +11,7 @@ dseg segment
 	secondFloat float <2+127,11000000b,0000000000000000b>	;-6
 	
 	oneFloat float <0+127,0,0>	;1
+	twoFloat float <1+127,0,0>	;2
 	helperFloat float <?,?,?>
 	helperFloat2 float <?,?,?>
 	
@@ -25,6 +26,8 @@ dseg segment
 	
 	additionFloat float <?,?,?>
 	multiplicationFloat float <?,?,?>
+	inverseFloat float <?,?,?>
+	divisionFloat float <?,?,?>
 	
 	;;misc. constants
 	negThreshold = 10000000b
@@ -39,6 +42,93 @@ dseg ends
 
 cseg segment
 assume cs:cseg, ds:dseg
+
+divFloat MACRO float1Offset,float2Offset			;;this is a work of art
+	local @@NRInverseCalc
+	
+	mov al, ds:[float2Offset].exponent
+	xor al,negThreshold				;;get estimate for x0 by switching exponent sign
+	mov inverseFloat.exponent,al
+	mov helperFloat.exponent,127
+	mov al, ds:[float2Offset].mantissa1
+	xor al,negThreshold
+	mov helperFloat.mantissa1,al
+	mov ax,ds:[float2Offset].mantissa2
+	mov helperFloat.mantissa2,ax
+	
+	push si, di
+	
+	mov si, offset oneFloat
+	mov di, offset helperFloat		;;get estimate for mantissa using binomial approximation
+	addFloat di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
+	
+	mov al, additionFloat.mantissa1
+	mov inverseFloat.mantissa1,al
+	mov ax, additionFloat.mantissa2
+	mov inverseFloat.mantissa2,ax
+	mov al, additionFloat.exponent
+	sub al,127
+	add inverseFloat.exponent,al	;;correct exponent
+	
+	pop di si
+	
+	push di
+	mov cx, 5		;;get to x5 for precision's sake
+@@NRInverseCalc:			;;calculate inverse using newton-raphson, so Xn+1=Xn*(2-D*Xn)
+	push cx
+
+	mov si, float2Offset
+	mov di, offset inverseFloat
+	mulFloat di, si
+	
+	mov al, multiplicationFloat.exponent	;;calculate D*Xn
+	mov helperFloat.exponent, al
+	mov al, multiplicationFloat.mantissa1
+	xor al,negThreshold				;;swap last bit so invFloat is -D*Xn
+	mov helperFloat.mantissa1,al
+	mov ax,multiplicationFloat.mantissa2
+	mov helperFloat.mantissa2,ax	
+	
+	push si
+	
+	mov si, offset twoFloat
+	mov di, offset helperFloat
+	addFloat di,si			;;calculate 2-(D*Xn)
+	
+	mov al, additionFloat.exponent
+	mov helperFloat.exponent,al
+	mov al, additionFloat.mantissa1
+	mov helperFloat.mantissa1,al
+	mov ax,additionFloat.mantissa2
+	mov helperFloat.mantissa2,ax	
+	
+	mov si, offset inverseFloat
+	mov di, offset helperFloat
+	mulFloat di,si		;;calculate Xn*(2-D*Xn)
+	
+	mov al, multiplicationFloat.exponent		;;gets Xn+1
+	mov inverseFloat.exponent, al
+	mov al,multiplicationFloat.mantissa1
+	mov inverseFloat.mantissa1,al
+	mov ax,multiplicationFloat.mantissa2
+	mov inverseFloat.mantissa2,ax	
+	
+	pop si
+	pop cx
+	loop @@NRInverseCalc
+	pop di
+	
+	mov di, float1Offset
+	mov si, offset inverseFloat
+	mulFloat di,si		;;calculate float1*1/float2
+	
+	mov al, multiplicationFloat.exponent
+	mov divisionFloat.exponent,al
+	mov al,multiplicationFloat.mantissa1
+	mov divisionFloat.mantissa1,al
+	mov ax,multiplicationFloat.mantissa2
+	mov divisionFloat.mantissa2,ax
+ENDM
 
 mulFloat MACRO float1Offset, float2Offset
 	local @@resultSignIsNeg
