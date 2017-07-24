@@ -48,6 +48,8 @@ mulFloat MACRO float1Offset, float2Offset
 	local @@resultIsPos
 	local @@gotoContLoop
 	local @@endLoop
+	local @@gotoMultiplyFloats
+	local @@getResult
 	
 	mov mulSign,0
 	
