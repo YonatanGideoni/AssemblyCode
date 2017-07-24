@@ -7,8 +7,8 @@ float ends
 
 dseg segment
 	;;variables
-	firstFloat float <3+127,00011000b,0000000000000000b/2>	;9.5
-	secondFloat float <2+127,11000000b,0000000000000000b/2>	;-6
+	firstFloat float <3+127,00011000b,0000000000000000b>	;9.5
+	secondFloat float <2+127,11000000b,0000000000000000b>	;-6
 	
 	oneFloat float <0+127,0,0>	;1
 	helperFloat float <?,?,?>
@@ -34,6 +34,7 @@ dseg segment
 	secondFloatMsg db "This is the second float:$"
 	additionMsg db "This is the result of their addition:$"
 	subtractionMsg db "This is the result of their subtraction:$"
+	multiplicationMsg db "This is the result of their multiplication:$"
 dseg ends
 
 cseg segment
@@ -382,8 +383,8 @@ addFloat MACRO float1Offset, float2Offset
 @@contAddMantissa:
 	mov additionFloat.mantissa1, al
 	
-	mov ah, helperArr[bx-1]
-	mov al, helperArr[bx-2]
+	mov ah, helperArr[bx+1]
+	mov al, helperArr[bx+2]
 	mov additionFloat.mantissa2, ax
 	
 	clearArr helperArr, helperArrLEN
@@ -706,6 +707,9 @@ dropLine endP
 		
 		call dropLine
 		
+		mov ah, 9
+		mov dx, offset multiplicationMsg
+		int 21h
 		
 		call dropLine
 		
