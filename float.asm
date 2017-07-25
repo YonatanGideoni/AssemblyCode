@@ -79,7 +79,7 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov inverseFloat.mantissa2,ax
 	mov al, additionFloat.exponent
 	sub al,127
-	sub inverseFloat.exponent,al	;;correct exponent
+	add inverseFloat.exponent,al	;;correct exponent
 	
 	pop di si
 	
