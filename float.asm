@@ -69,8 +69,8 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	
 	push si di
 	
-	mov di, offset oneFloat
-	mov si, offset helperFloat		;;get estimate for mantissa using binomial approximation
+	mov si, offset oneFloat
+	mov di, offset helperFloat		;;get estimate for mantissa using binomial approximation
 	addFloatWithoutImpl1 di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
 	
 	mov al, additionFloat.mantissa1
@@ -353,7 +353,8 @@ addFloat MACRO float1Offset, float2Offset
 	mov al, bl
 	mov bl, 8
 	div bl
-	mov bl, al	;;spot in array
+	mov bl,helperArrLEN
+	sub bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
@@ -371,7 +372,8 @@ addFloat MACRO float1Offset, float2Offset
 	mov al, bl
 	mov bl, 8
 	div bl
-	mov bl, al	;;spot in array
+	mov bl,helperArrLEN
+	sub bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
@@ -397,6 +399,7 @@ addFloat MACRO float1Offset, float2Offset
 	add cl, helperArr2[bx]
 	add ax, dx
 	sub ax, cx
+	stopSubtractionOverflow
 	mov helperArr[bx], al
 	not ah
 	and ah, 1
@@ -412,6 +415,7 @@ addFloat MACRO float1Offset, float2Offset
 	add cl, helperArr[bx]
 	add ax, dx
 	sub ax, cx
+	stopSubtractionOverflow
 	mov helperArr[bx], al
 	not ah
 	and ah, 1
@@ -446,13 +450,16 @@ addFloat MACRO float1Offset, float2Offset
 	mov bl, 8
 	mov ah, 0
 	div bl
-	mov bl, al	;;spot in array
+	mov bl,helperArrLEN
+	sub bl, al	;;spot in array
 	mov bh, 0
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, 1
 	mov dl, shiftNum
 	dec dl
 	cmp dl, 0
+	jz @@noShiftExp
+	cmp dl, 0ffh
 	jz @@noShiftExp
 	
 @@contShiftExp:
@@ -517,6 +524,18 @@ addFloat MACRO float1Offset, float2Offset
 	
 	clearArr helperArr, helperArrLEN
 	clearArr helperArr2, helperArrLEN
+ENDM
+
+stopSubtractionOverflow MACRO
+	local @@endMacro
+	
+	cmp cl,1
+	jne @@endMacro
+	cmp al, 0ffh
+	jne @@endMacro
+	mov al,0
+	mov ah,1	
+@@endMacro:
 ENDM
 
 addFloatWithoutImpl1 MACRO float1Offset, float2Offset
@@ -591,7 +610,8 @@ addFloatWithoutImpl1 MACRO float1Offset, float2Offset
 	mov al, bl
 	mov bl, 8
 	div bl
-	mov bl, al	;;spot in array
+	mov bl,helperArrLEN
+	sub bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
@@ -609,7 +629,8 @@ addFloatWithoutImpl1 MACRO float1Offset, float2Offset
 	mov al, bl
 	mov bl, 8
 	div bl
-	mov bl, al	;;spot in array
+	mov bl,helperArrLEN
+	sub bl, al	;;spot in array
 	mov shiftNum, ah	;;bits to shift in array
 	mov al, ch
 	mov bh, 0
@@ -745,8 +766,12 @@ ENDM
 
 shiftInArr MACRO arrPos, arr
 	local @@shiftLoop
+	local @@endMacro
 	mov cl, shiftNum
 	mov ch,0
+	cmp cx,0
+	je @@endMacro
+	
 	clc
 	
 @@shiftLoop:
@@ -757,6 +782,7 @@ shiftInArr MACRO arrPos, arr
 	rcl &arr[arrPos-2],1
 	clc
 	loop @@shiftLoop
+@@endMacro:
 ENDM
 
 findBiggestFloatAbs proc
@@ -868,6 +894,7 @@ ENDM
 printFloat MACRO floatOffset
 		local @@isPos
 		local @@isPosExp
+		push si
 		
 		mov ch, ds:[floatOffset].mantissa1
 		mov si, ds:[floatOffset].mantissa2
@@ -926,6 +953,8 @@ printFloat MACRO floatOffset
 		
 		and cl, 0fh
 		printNibble cl
+		
+		pop si
 	ENDM	
 
 clearScreen proc
