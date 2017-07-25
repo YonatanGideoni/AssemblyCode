@@ -45,22 +45,35 @@ assume cs:cseg, ds:dseg
 
 divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	local @@NRInverseCalc
+	local @@gotoNRInverseCalc
+	local @@finishNRCalc
+	
 	
 	mov al, ds:[float2Offset].exponent
-	xor al,negThreshold				;;get estimate for x0 by switching exponent sign
+	mov ah,al				;;get estimate for x0 by switching exponent sign
+	sub ah, 127
+	sub al,ah
+	sub al,ah
 	mov inverseFloat.exponent,al
+	mov al, ds:[float2Offset].mantissa1
+	mov inverseFloat.mantissa1,al
+	mov ax,ds:[float2Offset].mantissa2
+	mov inverseFloat.mantissa2,ax	
+	
 	mov helperFloat.exponent,127
 	mov al, ds:[float2Offset].mantissa1
-	xor al,negThreshold
+	or al,negThreshold
 	mov helperFloat.mantissa1,al
 	mov ax,ds:[float2Offset].mantissa2
 	mov helperFloat.mantissa2,ax
 	
-	push si, di
+	push si di
 	
-	mov si, offset oneFloat
-	mov di, offset helperFloat		;;get estimate for mantissa using binomial approximation
-	addFloat di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
+	int 3
+	
+	mov di, offset oneFloat
+	mov si, offset helperFloat		;;get estimate for mantissa using binomial approximation
+	addFloatWithoutImpl1 di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
 	
 	mov al, additionFloat.mantissa1
 	mov inverseFloat.mantissa1,al
@@ -72,8 +85,18 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	
 	pop di si
 	
+	mov al, ds:[float2Offset].mantissa1	
+	rcl inverseFloat.mantissa1,1
+	rcl al,1
+	rcr inverseFloat.mantissa1,1		;;maintain sign
+	
+	call dropLine
+	mov di, offset inverseFloat
+	printFloat di
+	call dropLine	
+	
 	push di
-	mov cx, 5		;;get to x5 for precision's sake
+	mov cx, 2		;;get to x5 for precision's sake
 @@NRInverseCalc:			;;calculate inverse using newton-raphson, so Xn+1=Xn*(2-D*Xn)
 	push cx
 
@@ -89,6 +112,11 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov ax,multiplicationFloat.mantissa2
 	mov helperFloat.mantissa2,ax	
 	
+	call dropLine
+	mov di, offset helperFloat
+	printFloat di
+	call dropLine
+	
 	push si
 	
 	mov si, offset twoFloat
@@ -102,6 +130,11 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov ax,additionFloat.mantissa2
 	mov helperFloat.mantissa2,ax	
 	
+	call dropLine
+	mov di, offset helperFloat
+	printFloat di
+	call dropLine
+	
 	mov si, offset inverseFloat
 	mov di, offset helperFloat
 	mulFloat di,si		;;calculate Xn*(2-D*Xn)
@@ -113,9 +146,19 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov ax,multiplicationFloat.mantissa2
 	mov inverseFloat.mantissa2,ax	
 	
+	call dropLine
+	mov di, offset inverseFloat
+	printFloat di
+	call dropLine
+	
 	pop si
 	pop cx
-	loop @@NRInverseCalc
+	loop @@gotoNRInverseCalc
+	jmp @@finishNRCalc
+@@gotoNRInverseCalc:
+	jmp @@NRInverseCalc
+	
+@@finishNRCalc:
 	pop di
 	
 	mov di, float1Offset
@@ -330,6 +373,249 @@ addFloat MACRO float1Offset, float2Offset
 	mov bl, ds:[float2Offset].exponent
 	mov al, ds:[float2Offset].mantissa1
 	or al, negThreshold		;;add implicit 1
+	mov ch, al
+	mov ah, 0
+	mov al, bl
+	mov bl, 8
+	div bl
+	mov bl, al	;;spot in array
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, ch
+	mov bh, 0
+	mov helperArr2[bx], al
+	mov ax, ds:[float2Offset].mantissa2
+	mov helperArr2[bx+1], ah
+	mov helperArr2[bx+2], al
+	shiftInArr bx, helperArr2
+
+	mov ax,0
+	mov dx,0
+	mov cx,0
+	mov bx, helperArrLEN-1
+	cmp cond, 0
+	je @@addArrays
+	mov ah, 1
+	cmp isBigger, 0
+	je @@sub2From1
+	jmp @@sub1From2
+	
+@@sub2From1:
+	mov dl, helperArr[bx]
+	add cl, helperArr2[bx]
+	add ax, dx
+	sub ax, cx
+	mov helperArr[bx], al
+	not ah
+	and ah, 1
+	mov cl, ah
+	mov ah, 1
+	mov al, 0
+	dec bx
+	jnz @@sub2From1
+	jmp @@convertToFloat
+
+@@sub1From2:
+	mov dl, helperArr2[bx]
+	add cl, helperArr[bx]
+	add ax, dx
+	sub ax, cx
+	mov helperArr[bx], al
+	not ah
+	and ah, 1
+	mov cl, ah
+	mov ah, 1
+	mov al, 0
+	dec bx
+	jnz @@sub2From1
+	jmp @@convertToFloat
+
+@@addArrays:
+	mov dl, helperArr[bx]
+	mov cl, helperArr2[bx]
+	add ax, dx
+	add ax, cx
+	mov helperArr[bx], al
+	mov al,0
+	xchg al, ah
+	dec bx
+	jnz @@addArrays
+	jmp @@convertToFloat
+	
+@@convertToFloat:
+	mov al, ds:[float1Offset].exponent
+	mov ah, ds:[float2Offset].exponent
+	cmp al, ah
+	ja @@firstIsBiggerExponent
+	mov al, ah
+	
+@@firstIsBiggerExponent:
+	mov ch, al
+	mov bl, 8
+	mov ah, 0
+	div bl
+	mov bl, al	;;spot in array
+	mov bh, 0
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, 1
+	mov dl, shiftNum
+	dec dl
+	cmp dl, 0
+	jz @@noShiftExp
+	
+@@contShiftExp:
+	shl al,1
+	dec dl
+	jnz @@contShiftExp
+@@noShiftExp:
+	dec bx
+	cmp al, helperArr[bx]
+	ja @@lowerExponent		;;normalize exponent
+	shl al, 1
+	cmp al, 0
+	jne @@contExponentCheck
+	mov al,1
+	inc bx
+	
+@@contExponentCheck:
+	cmp al, helperArr[bx]
+	jbe @@increaseExponent
+	jmp @@addExponent
+	
+@@increaseExponent:
+	inc ch
+	jmp @@addExponent
+	
+@@lowerExponent:
+	dec ch
+	shr al,1
+	cmp al,0
+	je @@shiftExpCheck
+	cmp al, helperArr[bx]
+	ja @@lowerExponent
+	jmp @@addExponent
+	
+@@shiftExpCheck:
+	inc bx
+	cmp al, helperArr[bx]
+	ja @@lowerExponent
+	
+@@addExponent:
+	mov additionFloat.exponent, ch
+	jmp @@addMantissa
+	
+@@addMantissa:
+	alignArrBits helperArr
+	findFirstBit helperArr
+	mov al, helperArr[bx]
+	shl al,1
+	shr al,1
+	cmp sign, 0
+	je @@additionIsPos	;;turn result neg or pos
+	or al, negThreshold
+	jmp @@contAddMantissa
+	
+@@additionIsPos:
+@@contAddMantissa:
+	mov additionFloat.mantissa1, al
+	
+	mov ah, helperArr[bx+1]
+	mov al, helperArr[bx+2]
+	mov additionFloat.mantissa2, ax
+	
+	clearArr helperArr, helperArrLEN
+	clearArr helperArr2, helperArrLEN
+ENDM
+
+addFloatWithoutImpl1 MACRO float1Offset, float2Offset
+	local @@firstIsBigger
+	local @@firstIsNeg
+	local @@startAdd
+	local @@checkCond
+	local @@sub1From2
+	local @@sub2From1
+	local @@contAddMantissa
+	local @@condIsAdd
+	local @@firstIsPos
+	local @@noShiftExp
+	local @@addExponent
+	local @@addMantissa
+	local @@lowerExponent
+	local @@increaseExponent
+	local @@convertToFloat
+	local @@firstIsBiggerExponent
+	local @@additionIsPos
+	local @@addArrays
+	local @@contShiftExp
+	local @@contExponentCheck
+	local @@shiftExpCheck
+	
+	mov sign,0
+	mov cond,0
+	mov isBigger,0
+	
+	mov bx, float1Offset
+	mov si, float2Offset
+	push bx si
+	call findBiggestFloatAbs
+	pop cx
+	mov isBigger, cx
+	cmp cx, 0
+	je @@firstIsBigger
+	mov al, ds:[float2Offset].mantissa1	;;because second is smaller, checks if it's pos or neg
+	rcl al, 1
+	adc sign,0
+	jmp @@checkCond
+	
+@@firstIsBigger:
+	mov al, ds:[float1Offset].mantissa1
+	rcl al, 1
+	adc sign,0
+
+@@checkCond:
+	mov al, ds:[float1Offset].mantissa1
+	rcl al, 1
+	jnc @@firstIsPos
+	jmp @@firstIsNeg
+	
+@@firstIsPos:
+	mov bl, ds:[float2Offset].mantissa1
+	rcl bl, 1
+	jnc @@condIsAdd
+	mov cond,1
+	jmp @@startAdd
+	
+@@firstIsNeg:
+	mov bl, ds:[float2Offset].mantissa1
+	rcl bl, 1
+	jc @@condIsAdd
+	mov cond,1
+	jmp @@startAdd
+	
+@@condIsAdd:
+	mov cond,0
+	
+@@startAdd:
+	mov bl, ds:[float1Offset].exponent
+	mov al, ds:[float1Offset].mantissa1
+	or al, negThreshold		;;add implicit 1
+	mov ch, al
+	mov ah, 0
+	mov al, bl
+	mov bl, 8
+	div bl
+	mov bl, al	;;spot in array
+	mov shiftNum, ah	;;bits to shift in array
+	mov al, ch
+	mov bh, 0
+	mov helperArr[bx], al
+	mov ax, ds:[float1Offset].mantissa2
+	mov helperArr[bx+1], ah
+	mov helperArr[bx+2], al
+	shiftInArr bx, helperArr
+	
+	mov bl, ds:[float2Offset].exponent
+	mov al, ds:[float2Offset].mantissa1
+	and al, 7fh		;;MAKE SURE THERE ISN'T implicit 1
 	mov ch, al
 	mov ah, 0
 	mov al, bl
@@ -812,6 +1098,14 @@ dropLine endP
 		mov di, offset multiplicationFloat
 		printFloat di
 		
+		call dropLine
+		
+		mov di, offset firstFloat
+		mov si, offset secondFloat
+		divFloat di, si
+		
+		mov di, offset divisionFloat
+		printFloat di
 	Finish:
 		int 3
 cseg ends
