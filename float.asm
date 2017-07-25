@@ -69,8 +69,6 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	
 	push si di
 	
-	int 3
-	
 	mov di, offset oneFloat
 	mov si, offset helperFloat		;;get estimate for mantissa using binomial approximation
 	addFloatWithoutImpl1 di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
@@ -81,7 +79,7 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov inverseFloat.mantissa2,ax
 	mov al, additionFloat.exponent
 	sub al,127
-	add inverseFloat.exponent,al	;;correct exponent
+	sub inverseFloat.exponent,al	;;correct exponent
 	
 	pop di si
 	
@@ -89,11 +87,6 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	rcl inverseFloat.mantissa1,1
 	rcl al,1
 	rcr inverseFloat.mantissa1,1		;;maintain sign
-	
-	call dropLine
-	mov di, offset inverseFloat
-	printFloat di
-	call dropLine	
 	
 	push di
 	mov cx, 2		;;get to x5 for precision's sake
@@ -536,18 +529,13 @@ addFloatWithoutImpl1 MACRO float1Offset, float2Offset
 	local @@contAddMantissa
 	local @@condIsAdd
 	local @@firstIsPos
-	local @@noShiftExp
 	local @@addExponent
 	local @@addMantissa
 	local @@lowerExponent
 	local @@increaseExponent
 	local @@convertToFloat
-	local @@firstIsBiggerExponent
 	local @@additionIsPos
 	local @@addArrays
-	local @@contShiftExp
-	local @@contExponentCheck
-	local @@shiftExpCheck
 	
 	mov sign,0
 	mov cond,0
@@ -685,70 +673,26 @@ addFloatWithoutImpl1 MACRO float1Offset, float2Offset
 	jmp @@convertToFloat
 	
 @@convertToFloat:
-	mov al, ds:[float1Offset].exponent
-	mov ah, ds:[float2Offset].exponent
-	cmp al, ah
-	ja @@firstIsBiggerExponent
-	mov al, ah
+	alignArrBits helperArr
+	findFirstBit helperArr
+	mov ch,127-1
+	cmp helperArr[bx],0
+	je @@addExponent
+	mov al,80h
+	jmp @@lowerExponent		;;normalize exponent
 	
-@@firstIsBiggerExponent:
-	mov ch, al
-	mov bl, 8
-	mov ah, 0
-	div bl
-	mov bl, al	;;spot in array
-	mov bh, 0
-	mov shiftNum, ah	;;bits to shift in array
-	mov al, 1
-	mov dl, shiftNum
-	dec dl
-	cmp dl, 0
-	jz @@noShiftExp
-	
-@@contShiftExp:
-	shl al,1
-	dec dl
-	jnz @@contShiftExp
-@@noShiftExp:
-	dec bx
+@@lowerExponent:	
 	cmp al, helperArr[bx]
-	ja @@lowerExponent		;;normalize exponent
-	shl al, 1
-	cmp al, 0
-	jne @@contExponentCheck
-	mov al,1
-	inc bx
-	
-@@contExponentCheck:
-	cmp al, helperArr[bx]
-	jbe @@increaseExponent
-	jmp @@addExponent
-	
-@@increaseExponent:
-	inc ch
-	jmp @@addExponent
-	
-@@lowerExponent:
-	dec ch
+	jbe @@addExponent
 	shr al,1
-	cmp al,0
-	je @@shiftExpCheck
-	cmp al, helperArr[bx]
-	ja @@lowerExponent
-	jmp @@addExponent
-	
-@@shiftExpCheck:
-	inc bx
-	cmp al, helperArr[bx]
-	ja @@lowerExponent
+	dec ch
+	jmp @@lowerExponent
 	
 @@addExponent:
 	mov additionFloat.exponent, ch
 	jmp @@addMantissa
 	
 @@addMantissa:
-	alignArrBits helperArr
-	findFirstBit helperArr
 	mov al, helperArr[bx]
 	shl al,1
 	shr al,1
