@@ -38,6 +38,7 @@ dseg segment
 	additionMsg db "This is the result of their addition:$"
 	subtractionMsg db "This is the result of their subtraction:$"
 	multiplicationMsg db "This is the result of their multiplication:$"
+	divisionMsg db "This is the result of their division:$"
 dseg ends
 
 cseg segment
@@ -69,8 +70,8 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	
 	push si di
 	
-	mov si, offset oneFloat
-	mov di, offset helperFloat		;;get estimate for mantissa using binomial approximation
+	mov di, offset oneFloat			;;IMPORTANT-di is oneFloat,here order does matter
+	mov si, offset helperFloat		;;get estimate for mantissa using binomial approximation
 	addFloatWithoutImpl1 di,si					;;(1+mantissa)^-1~=1-mantissa, AKA new mantissa=1/old mantissa~=1-old mantissa
 	
 	mov al, additionFloat.mantissa1
@@ -89,7 +90,7 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	rcr inverseFloat.mantissa1,1		;;maintain sign
 	
 	push di
-	mov cx, 2		;;get to x5 for precision's sake
+	mov cx, 3		;;get to x3 for precision's sake
 @@NRInverseCalc:			;;calculate inverse using newton-raphson, so Xn+1=Xn*(2-D*Xn)
 	push cx
 
@@ -103,17 +104,12 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	xor al,negThreshold				;;swap last bit so invFloat is -D*Xn
 	mov helperFloat.mantissa1,al
 	mov ax,multiplicationFloat.mantissa2
-	mov helperFloat.mantissa2,ax	
-	
-	call dropLine
-	mov di, offset helperFloat
-	printFloat di
-	call dropLine
+	mov helperFloat.mantissa2,ax
 	
 	push si
 	
-	mov si, offset twoFloat
-	mov di, offset helperFloat
+	mov di, offset twoFloat
+	mov si, offset helperFloat
 	addFloat di,si			;;calculate 2-(D*Xn)
 	
 	mov al, additionFloat.exponent
@@ -121,12 +117,7 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov al, additionFloat.mantissa1
 	mov helperFloat.mantissa1,al
 	mov ax,additionFloat.mantissa2
-	mov helperFloat.mantissa2,ax	
-	
-	call dropLine
-	mov di, offset helperFloat
-	printFloat di
-	call dropLine
+	mov helperFloat.mantissa2,ax
 	
 	mov si, offset inverseFloat
 	mov di, offset helperFloat
@@ -137,12 +128,7 @@ divFloat MACRO float1Offset,float2Offset			;;this is a work of art
 	mov al,multiplicationFloat.mantissa1
 	mov inverseFloat.mantissa1,al
 	mov ax,multiplicationFloat.mantissa2
-	mov inverseFloat.mantissa2,ax	
-	
-	call dropLine
-	mov di, offset inverseFloat
-	printFloat di
-	call dropLine
+	mov inverseFloat.mantissa2,ax
 	
 	pop si
 	pop cx
@@ -1076,6 +1062,12 @@ dropLine endP
 		mov di, offset firstFloat
 		mov si, offset secondFloat
 		divFloat di, si
+		
+		mov ah, 9
+		mov dx, offset divisionMsg
+		int 21h
+		
+		call dropLine
 		
 		mov di, offset divisionFloat
 		printFloat di
