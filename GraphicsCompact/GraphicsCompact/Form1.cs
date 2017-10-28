@@ -39,17 +39,6 @@ namespace GraphicsCompact
                     Board[i, k].Size = new Size(ButtonSize, ButtonSize);
                     Board[i, k].Location = new Point(ButtonSize * i, ButtonSize * k);
                     Board[i, k].Tag = new short[2] { i, k };
-
-                    if (i % 2 == 0)
-                    {
-                        intBoard[i, k] = 0;
-                        Board[i, k].BackColor = Color.White;
-                    }
-                    else
-                    {
-                        intBoard[i, k] = 1;
-                        Board[i, k].BackColor = Color.Black;
-                    }
                     
 
                     panel1.Controls.Add(Board[i, k]);

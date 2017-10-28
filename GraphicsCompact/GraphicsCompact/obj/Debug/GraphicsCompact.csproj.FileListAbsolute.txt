@@ -1,0 +1,10 @@
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\bin\Debug\GraphicsCompact.exe.config
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\bin\Debug\GraphicsCompact.exe
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\bin\Debug\GraphicsCompact.pdb
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.csprojResolveAssemblyReference.cache
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.Form1.resources
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.Properties.Resources.resources
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.csproj.GenerateResource.Cache
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.csproj.CoreCompileInputs.cache
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.exe
+C:\Users\Yonatan\Desktop\GraphicsCompact\GraphicsCompact\obj\Debug\GraphicsCompact.pdb
